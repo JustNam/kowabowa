@@ -17,9 +17,18 @@ export const ROUTES = {
     LIST: '/goals/list',
     DETAIL: (id: string) => `/goals/${id}`,
     // No CREATE route — Create Goal is a modal (src/modules/goals/components/create),
-    // opened from the Goals list, not a page. See docs/architecture/PAGE_INVENTORY.md.
+    // opened from the Goals list, not a page.
   },
 
-  // TODO: add COMPETENCIES and RAW_LOGS route groups once you've
-  // designed and implemented those features yourself.
+  // DB/code name is "competencies" (matches the data model); user-facing
+  // copy says "Skills" (matches the product design).
+  SKILLS: {
+    LIST: '/skills/list',
+  },
+
+  // Global log of everything across all goals. Goal-scoped logs are
+  // rendered inline on the Goal detail page via RawLogsApi.list(goalId).
+  LOGS: {
+    LIST: '/logs/list',
+  },
 } as const

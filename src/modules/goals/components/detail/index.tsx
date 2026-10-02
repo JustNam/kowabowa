@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react'
 import { GoalsApi } from '@/api/goals'
 import type { IGoalModel } from '@/interfaces/goal.model'
+import { RawLogsList } from '@/modules/raw-logs/components/list'
 
 export function GoalsDetail({ id }: { id: string }) {
   const [goal, setGoal] = useState<IGoalModel | null>(null)
@@ -18,15 +19,24 @@ export function GoalsDetail({ id }: { id: string }) {
   if (!goal) return <p className="text-slate-500">Loading…</p>
 
   return (
-    <div className="space-y-2">
-      <h2 className="text-xl font-semibold text-slate-900">{goal.title}</h2>
-      <p className="text-sm uppercase tracking-wide text-slate-400">
-        {goal.status.replace('_', ' ')}
-      </p>
-      {goal.description && <p className="text-slate-700">{goal.description}</p>}
-      {goal.targetDate && (
-        <p className="text-sm text-slate-500">Target date: {goal.targetDate}</p>
-      )}
+    <div className="space-y-8">
+      <div className="space-y-2">
+        <h2 className="text-xl font-semibold text-slate-900">{goal.title}</h2>
+        <p className="text-sm uppercase tracking-wide text-slate-400">
+          {goal.status.replace('_', ' ')}
+        </p>
+        {goal.description && <p className="text-slate-700">{goal.description}</p>}
+        {goal.targetDate && (
+          <p className="text-sm text-slate-500">Target date: {goal.targetDate}</p>
+        )}
+      </div>
+
+      <div>
+        <h3 className="mb-3 text-sm font-medium uppercase tracking-wide text-slate-400">
+          Logs for this goal
+        </h3>
+        <RawLogsList goalId={goal.id} />
+      </div>
     </div>
   )
 }

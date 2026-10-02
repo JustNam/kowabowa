@@ -9,7 +9,8 @@ import type { IGoalModel, IGoalCreateRequest, IGoalDatabaseModel } from '@/inter
  * converts snake_case database rows into camelCase frontend models via
  * the adapter.
  *
- * This is the pattern to copy for Competencies/Skills and Raw logs.
+ * Same shape as CompetenciesApi (src/api/competencies.ts) and RawLogsApi
+ * (src/api/rawLogs.ts).
  */
 export class GoalsApi {
   static async list(): Promise<{ data: IGoalModel[] }> {

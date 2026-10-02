@@ -15,10 +15,12 @@ Both repos deploy into the *same* Supabase project — it's one backing
 service split across two codebases, not two servers. See
 [Two Repos, One Backing Service](#two-repos-one-backing-service) below.
 
-Only one feature — **Goals** — is fully built, end to end. It exists as
-the pattern you copy for everything else. Competencies/Skills and Raw
-logs are deliberately left as exercises; see `docs/architecture/DATA_MODEL.md`
-and `kowabowa-backend`'s `CLAUDE.md`.
+Goals, Competencies/Skills, and Raw logs are all implemented end to end,
+each following the same shape — see `docs/architecture/DATA_MODEL.md` and
+`kowabowa-backend`'s `CLAUDE.md` for the pattern. `auth.users` has a
+companion `public.profiles` table (Supabase best practice — see
+DATA_MODEL.md for why) that's written only by a database trigger, not
+application code.
 
 ---
 
@@ -333,5 +335,4 @@ Don't build ahead of these — they're left as-is on purpose:
 - Auth hardening, RBAC, secrets handling
 - Locking down `kowabowa-backend`'s wildcard CORS
 
-See `docs/architecture/DATA_MODEL.md` for the full data model and exactly
-what to build for the entities still marked as your exercise.
+See `docs/architecture/DATA_MODEL.md` for the full data model.

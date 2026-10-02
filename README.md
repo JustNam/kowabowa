@@ -2,10 +2,9 @@
 
 Continuous work-achievement tracking, tied directly to performance review.
 
-This is the **running example** for Product Iteration with AI — built up
-incrementally as the course progresses. See [`ARCHITECTURE.md`](./ARCHITECTURE.md)
-for the full architecture and [`docs/architecture/DATA_MODEL.md`](./docs/architecture/DATA_MODEL.md)
-for the data model.
+See [`ARCHITECTURE.md`](./ARCHITECTURE.md) for the full architecture and
+[`docs/architecture/DATA_MODEL.md`](./docs/architecture/DATA_MODEL.md) for
+the data model.
 
 **This repo is the frontend only.** The database and business-domain API
 live in the companion [`kowabowa-backend`](../kowabowa-backend) repo as
@@ -13,18 +12,20 @@ Supabase Edge Functions — both deploy into the same Supabase project, as
 two codebases rather than one monolith. See
 [`ARCHITECTURE.md#two-repos-one-backing-service`](./ARCHITECTURE.md#two-repos-one-backing-service).
 
-## What's built vs. what's your exercise
+## What's built
 
 | Feature              | Status                                       |
 | --------------------- | --------------------------------------------- |
-| Auth (sign in/up/out)  | ✅ implemented (this repo)                      |
-| Goals                  | ✅ implemented — **the pattern to copy** (split across both repos) |
-| Competencies/Skills    | 🔲 your exercise                                   |
-| Raw logs               | 🔲 your exercise                                   |
+| Auth (sign in/up/out, forgot password) | ✅ implemented (this repo) |
+| Profile (`public.profiles`) | ✅ implemented (auto-created on signup, no UI yet) |
+| Dashboard              | ✅ implemented (empty-state only)              |
+| Goals                  | ✅ implemented (split across both repos)        |
+| Skills (Competencies)  | ✅ implemented (split across both repos)        |
+| Logs (Raw logs)        | ✅ implemented (split across both repos)        |
 
-Before touching Competencies/Skills or Raw logs, read `src/modules/goals/`
-+ `src/api/goals.ts` here, and `supabase/functions/goals/index.ts` in
-`kowabowa-backend`, end to end — every new feature should look like that one.
+Every feature follows the same shape — see `src/modules/goals/` +
+`src/api/goals.ts` here and `supabase/functions/goals/index.ts` in
+`kowabowa-backend` as the reference.
 
 ## Getting started
 
@@ -33,7 +34,7 @@ Before touching Competencies/Skills or Raw logs, read `src/modules/goals/`
 npx supabase start          # requires Docker — prints your local URL/keys
 npx supabase db reset       # applies supabase/migrations/
 cp .env.example .env        # paste in the printed keys
-npx supabase functions serve goals --env-file .env
+npx supabase functions serve --env-file .env   # serves every function
 
 # 2. Back in this repo:
 npm install
@@ -60,13 +61,13 @@ src/
   app/        # pages + auth API routes only (src/app/api/auth/**)
   api/        # client-side API service classes
   adapters/   # snake_case <-> camelCase conversion
-  atoms/      # Button, Input, Textarea
-  modules/    # feature modules (goals/ is the only one so far)
+  atoms/      # Button, Input, Textarea, Select, Modal
+  modules/    # feature modules: goals/, competencies/, raw-logs/
   lib/        # axios.ts (auth, cookie-based) + backendApi.ts (Bearer token)
   ...
 docs/architecture/
   DATA_MODEL.md
 ```
 
-The database, migrations, and the `goals` Edge Function live in
+The database, migrations, and Edge Functions live in
 [`kowabowa-backend`](../kowabowa-backend), not here.

@@ -1,18 +1,39 @@
-/**
- * NOT IMPLEMENTED YET.
- *
- * There is no `raw_logs` table in supabase/migrations yet. This interface
- * is a placeholder so the shape of the data model is visible from day one
- * — your job is to:
- *   1. Design the `raw_logs` table (see docs/architecture/DATA_MODEL.md).
- *      A raw log belongs to a User, links back to exactly one Goal, and
- *      references one or more Competencies/Skills it provides evidence for.
- *   2. Write the migration.
- *   3. Flesh this interface out, then build the adapter + API + UI
- *      following the exact pattern used for Goals in this codebase.
- */
+import type { ICompetencyDatabaseModel, ICompetencyModel } from './competency.model'
+
+export interface IRawLogDatabaseModel {
+  id: string
+  user_id: string
+  goal_id: string
+  description: string
+  logged_at: string
+  created_at: string
+  // Nested via Supabase's foreign-table select — see
+  // kowabowa-backend/supabase/functions/raw-logs/index.ts#SELECT_WITH_RELATIONS.
+  goals: { id: string; title: string } | null
+  raw_log_competencies: { competency_id: string; competencies: ICompetencyDatabaseModel | null }[]
+}
+
 export interface IRawLogModel {
   id: string
   userId: string
   goalId: string
+  goalTitle: string | null
+  description: string
+  loggedAt: string
+  createdAt: string
+  competencies: ICompetencyModel[]
+}
+
+export interface IRawLogCreateRequest {
+  goalId: string
+  description: string
+  loggedAt?: string
+  competencyIds: string[]
+}
+
+export interface IRawLogCreateDatabaseRequest {
+  goal_id: string
+  description: string
+  logged_at?: string
+  competency_ids: string[]
 }
