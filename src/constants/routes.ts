@@ -13,6 +13,9 @@ export const ROUTES = {
 
   DASHBOARD: '/dashboard',
 
+  // Shown once, right after signup — see src/app/onboarding/page.tsx.
+  ONBOARDING: '/onboarding',
+
   GOALS: {
     LIST: '/goals/list',
     DETAIL: (id: string) => `/goals/${id}`,

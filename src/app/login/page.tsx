@@ -22,7 +22,7 @@ export default function LoginPage() {
       router.push(ROUTES.POST_LOGIN_REDIRECT)
     } else {
       await signUp(email, password)
-      setMode('signin')
+      router.push(ROUTES.ONBOARDING)
     }
   }
 

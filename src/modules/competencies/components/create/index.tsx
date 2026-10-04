@@ -1,9 +1,7 @@
 'use client'
 
 import { useState, type FormEvent } from 'react'
-import { ValidationError } from 'yup'
 import { CompetenciesApi } from '@/api/competencies'
-import { createCompetencySchema } from '../../schema'
 import { Modal } from '@/atoms/modal'
 import { Button } from '@/atoms/button'
 import { Input } from '@/atoms/input'
@@ -12,6 +10,13 @@ interface CompetenciesCreateProps {
   open: boolean
   onClose: () => void
   onCreated: () => void
+}
+
+function validateName(name: string): string | null {
+  const trimmed = name.trim()
+  if (!trimmed) return 'Name is required'
+  if (trimmed.length > 60) return 'Keep it under 60 characters'
+  return null
 }
 
 export function CompetenciesCreate({ open, onClose, onCreated }: CompetenciesCreateProps) {
@@ -33,23 +38,20 @@ export function CompetenciesCreate({ open, onClose, onCreated }: CompetenciesCre
     event.preventDefault()
     setErrors({})
 
+    const nameError = validateName(name)
+    if (nameError) {
+      setErrors({ name: nameError })
+      return
+    }
+
     try {
-      const values = await createCompetencySchema.validate({ name }, { abortEarly: false })
       setSubmitting(true)
-      await CompetenciesApi.create(values)
+      await CompetenciesApi.create({ name: name.trim() })
       reset()
       onCreated()
       onClose()
     } catch (err) {
-      if (err instanceof ValidationError) {
-        const fieldErrors: Record<string, string> = {}
-        err.inner.forEach((issue) => {
-          if (issue.path) fieldErrors[issue.path] = issue.message
-        })
-        setErrors(fieldErrors)
-      } else {
-        setErrors({ form: err instanceof Error ? err.message : 'Failed to add skill' })
-      }
+      setErrors({ form: err instanceof Error ? err.message : 'Failed to add skill' })
     } finally {
       setSubmitting(false)
     }
