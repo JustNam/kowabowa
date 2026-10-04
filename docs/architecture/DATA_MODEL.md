@@ -32,6 +32,11 @@ demonstrates. Goals and competencies are the two lenses used to aggregate
 raw logs later (progress-toward-a-goal view vs. skill-growth-over-time
 view) — which is exactly the shape a performance review needs.
 
+**Achievements are explicitly out of scope.** The feature-design doc
+specs a raw log being optionally flagged as an "achievement" (its own
+tab, a celebration modal). That's deliberately not part of this data
+model or build — raw logs stay a single, undifferentiated entity.
+
 **Why `profiles` is separate from `auth.users`**: Supabase owns the
 `auth.users` schema — you don't add columns to it or write to it directly
 from application code. `public.profiles` is the standard companion table

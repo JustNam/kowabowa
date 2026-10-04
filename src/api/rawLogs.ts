@@ -7,7 +7,7 @@ import type {
 } from '@/interfaces/raw-log.model'
 
 export class RawLogsApi {
-  /** Omit goalId to fetch every log for the current user (the Daily logs page). */
+  /** Omit goalId to fetch every log for the current user. */
   static async list(goalId?: string): Promise<{ data: IRawLogModel[] }> {
     const response = await backendApi.get<{ data: IRawLogDatabaseModel[] }>('/raw-logs', {
       params: goalId ? { goal_id: goalId } : undefined,

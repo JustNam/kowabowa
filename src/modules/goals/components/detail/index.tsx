@@ -26,9 +26,9 @@ export function GoalsDetail({ id }: { id: string }) {
           {goal.status.replace('_', ' ')}
         </p>
         {goal.description && <p className="text-slate-700">{goal.description}</p>}
-        {goal.targetDate && (
-          <p className="text-sm text-slate-500">Target date: {goal.targetDate}</p>
-        )}
+        <p className="text-sm text-slate-500">
+          {goal.startDate} → {goal.endDate}
+        </p>
       </div>
 
       <div>

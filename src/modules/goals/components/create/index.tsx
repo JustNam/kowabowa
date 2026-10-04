@@ -18,14 +18,16 @@ interface GoalsCreateProps {
 export function GoalsCreate({ open, onClose, onCreated }: GoalsCreateProps) {
   const [title, setTitle] = useState('')
   const [description, setDescription] = useState('')
-  const [targetDate, setTargetDate] = useState('')
+  const [startDate, setStartDate] = useState('')
+  const [endDate, setEndDate] = useState('')
   const [errors, setErrors] = useState<Record<string, string>>({})
   const [submitting, setSubmitting] = useState(false)
 
   function reset() {
     setTitle('')
     setDescription('')
-    setTargetDate('')
+    setStartDate('')
+    setEndDate('')
     setErrors({})
   }
 
@@ -40,7 +42,7 @@ export function GoalsCreate({ open, onClose, onCreated }: GoalsCreateProps) {
 
     try {
       const values = await createGoalSchema.validate(
-        { title, description, targetDate },
+        { title, description, startDate, endDate },
         { abortEarly: false }
       )
       setSubmitting(true)
@@ -85,8 +87,19 @@ export function GoalsCreate({ open, onClose, onCreated }: GoalsCreateProps) {
           {errors.description && <p className="mt-1 text-sm text-red-600">{errors.description}</p>}
         </div>
 
-        <div>
-          <Input type="date" value={targetDate} onChange={(e) => setTargetDate(e.target.value)} />
+        <div className="flex gap-3">
+          <div className="flex-1">
+            <Input
+              type="date"
+              value={startDate}
+              onChange={(e) => setStartDate(e.target.value)}
+            />
+            {errors.startDate && <p className="mt-1 text-sm text-red-600">{errors.startDate}</p>}
+          </div>
+          <div className="flex-1">
+            <Input type="date" value={endDate} onChange={(e) => setEndDate(e.target.value)} />
+            {errors.endDate && <p className="mt-1 text-sm text-red-600">{errors.endDate}</p>}
+          </div>
         </div>
 
         {errors.form && <p className="text-sm text-red-600">{errors.form}</p>}

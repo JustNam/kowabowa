@@ -14,7 +14,8 @@ export class GoalAdapter implements IAdapterWithList<IGoalDatabaseModel, IGoalMo
       title: dbData.title,
       description: dbData.description,
       status: dbData.status,
-      targetDate: dbData.target_date,
+      startDate: dbData.start_date,
+      endDate: dbData.end_date,
       createdAt: dbData.created_at,
       updatedAt: dbData.updated_at,
     }
@@ -27,7 +28,8 @@ export class GoalAdapter implements IAdapterWithList<IGoalDatabaseModel, IGoalMo
       title: frontendData.title,
       description: frontendData.description,
       status: frontendData.status,
-      target_date: frontendData.targetDate,
+      start_date: frontendData.startDate,
+      end_date: frontendData.endDate,
       created_at: frontendData.createdAt,
       updated_at: frontendData.updatedAt,
     }
@@ -44,13 +46,12 @@ export class GoalAdapter implements IAdapterWithList<IGoalDatabaseModel, IGoalMo
   createRequestToDatabase(frontendData: IGoalCreateRequest): IGoalCreateDatabaseRequest {
     const dbData: IGoalCreateDatabaseRequest = {
       title: frontendData.title,
+      start_date: frontendData.startDate,
+      end_date: frontendData.endDate,
     }
 
     if (frontendData.description && frontendData.description.trim()) {
       dbData.description = frontendData.description
-    }
-    if (frontendData.targetDate && frontendData.targetDate.trim()) {
-      dbData.target_date = frontendData.targetDate
     }
 
     return dbData

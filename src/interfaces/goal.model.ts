@@ -11,7 +11,8 @@ export interface IGoalDatabaseModel {
   title: string
   description: string | null
   status: EGoalStatus
-  target_date: string | null
+  start_date: string
+  end_date: string
   created_at: string
   updated_at: string
 }
@@ -23,7 +24,8 @@ export interface IGoalModel {
   title: string
   description: string | null
   status: EGoalStatus
-  targetDate: string | null
+  startDate: string
+  endDate: string
   createdAt: string
   updatedAt: string
 }
@@ -31,11 +33,13 @@ export interface IGoalModel {
 export interface IGoalCreateRequest {
   title: string
   description?: string
-  targetDate?: string
+  startDate: string
+  endDate: string
 }
 
 export interface IGoalCreateDatabaseRequest {
   title: string
   description?: string
-  target_date?: string
+  start_date: string
+  end_date: string
 }

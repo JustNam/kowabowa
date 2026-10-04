@@ -1,7 +1,7 @@
 import type { Metadata } from 'next'
 import type { ReactNode } from 'react'
 import { AuthProvider } from '@/components/AuthProvider'
-import { NavBar } from '@/components/NavBar'
+import { Sidebar } from '@/components/Sidebar'
 import './globals.css'
 
 export const metadata: Metadata = {
@@ -14,8 +14,10 @@ export default function RootLayout({ children }: { children: ReactNode }) {
     <html lang="en">
       <body className="bg-white text-slate-900 antialiased">
         <AuthProvider>
-          <NavBar />
-          {children}
+          <div className="flex min-h-screen">
+            <Sidebar />
+            <main className="flex-1">{children}</main>
+          </div>
         </AuthProvider>
       </body>
     </html>

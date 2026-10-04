@@ -26,9 +26,7 @@ export const ROUTES = {
     LIST: '/skills/list',
   },
 
-  // Global log of everything across all goals. Goal-scoped logs are
-  // rendered inline on the Goal detail page via RawLogsApi.list(goalId).
-  LOGS: {
-    LIST: '/logs/list',
-  },
+  // No global logs page — logs are only ever goal-scoped (Goal detail,
+  // via RawLogsApi.list(goalId)) or created ad hoc via the sidebar's
+  // Quick log button (src/components/Sidebar.tsx), per the design doc.
 } as const

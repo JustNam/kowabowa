@@ -7,8 +7,8 @@ import { Button } from '@/atoms/button'
 import { RawLogsCreate } from '../create'
 
 interface RawLogsListProps {
-  /** Scopes the list to one goal and pre-fills the create modal — used
-   * by the Goal detail page. Omit for the global /logs/list page. */
+  /** Scopes the list to one goal and pre-fills the create modal — the
+   * only current caller is the Goal detail page. */
   goalId?: string
 }
 
