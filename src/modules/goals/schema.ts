@@ -1,21 +1,24 @@
-import * as yup from 'yup'
+import type { IGoalCreateRequest } from '@/interfaces/goal.model'
 
-export const createGoalSchema = yup.object({
-  title: yup.string().required('Title is required').max(120, 'Keep it under 120 characters'),
-  description: yup.string().max(500, 'Keep it under 500 characters'),
-  startDate: yup.string().required('Start date is required'),
-  endDate: yup
-    .string()
-    .required('End date is required')
-    .test(
-      'end-on-or-after-start',
-      'End date must be on or after the start date',
-      function (value) {
-        const { startDate } = this.parent
-        if (!startDate || !value) return true
-        return value >= startDate
-      }
-    ),
-})
+export function validateGoalForm(
+  values: IGoalCreateRequest
+): Partial<Record<keyof IGoalCreateRequest, string>> {
+  const errors: Partial<Record<keyof IGoalCreateRequest, string>> = {}
+  const title = values.title.trim()
 
-export type CreateGoalFormValues = yup.InferType<typeof createGoalSchema>
+  if (!title) errors.title = 'Title is required'
+  else if (title.length > 120) errors.title = 'Keep it under 120 characters'
+
+  if (values.description && values.description.length > 500) {
+    errors.description = 'Keep it under 500 characters'
+  }
+
+  if (!values.startDate) errors.startDate = 'Start date is required'
+
+  if (!values.endDate) errors.endDate = 'End date is required'
+  else if (values.startDate && values.endDate < values.startDate) {
+    errors.endDate = 'End date must be on or after the start date'
+  }
+
+  return errors
+}

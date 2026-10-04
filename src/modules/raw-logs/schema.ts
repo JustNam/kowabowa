@@ -1,16 +1,21 @@
-import * as yup from 'yup'
+export interface RawLogFormValues {
+  goalId: string
+  description: string
+  competencyIds: string[]
+}
 
-export const createRawLogSchema = yup.object({
-  goalId: yup.string().required('Pick a goal'),
-  description: yup
-    .string()
-    .required('Description is required')
-    .max(500, 'Keep it under 500 characters'),
-  competencyIds: yup
-    .array()
-    .of(yup.string().required())
-    .min(1, 'Pick at least one skill')
-    .required(),
-})
+export function validateRawLogForm(
+  values: RawLogFormValues
+): Partial<Record<keyof RawLogFormValues, string>> {
+  const errors: Partial<Record<keyof RawLogFormValues, string>> = {}
 
-export type CreateRawLogFormValues = yup.InferType<typeof createRawLogSchema>
+  if (!values.goalId) errors.goalId = 'Pick a goal'
+
+  const description = values.description.trim()
+  if (!description) errors.description = 'Description is required'
+  else if (description.length > 500) errors.description = 'Keep it under 500 characters'
+
+  if (values.competencyIds.length === 0) errors.competencyIds = 'Pick at least one skill'
+
+  return errors
+}

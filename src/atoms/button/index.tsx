@@ -1,19 +1,29 @@
-import clsx from 'clsx'
-import { forwardRef, type ButtonHTMLAttributes } from 'react'
+import MuiButton, { type ButtonProps as MuiButtonProps } from '@mui/material/Button'
+import { forwardRef } from 'react'
+
+export type ButtonVariant = 'primary' | 'secondary' | 'ghost' | 'text' | 'destructive'
+
+export interface ButtonProps extends Omit<MuiButtonProps, 'variant' | 'color'> {
+  /** Maps onto MUI's own `variant`/`color` combination — see VARIANT_MAP below. */
+  variant?: ButtonVariant
+}
+
+const VARIANT_MAP: Record<ButtonVariant, Pick<MuiButtonProps, 'variant' | 'color'>> = {
+  primary: { variant: 'contained', color: 'primary' },
+  secondary: { variant: 'outlined', color: 'primary' },
+  ghost: { variant: 'text', color: 'primary' },
+  text: { variant: 'text', color: 'primary' },
+  destructive: { variant: 'contained', color: 'error' },
+}
 
 /**
- * Atom: pure UI, no business logic. See ARCHITECTURE.md#atoms-vs-components.
+ * Atom: pure UI, no business logic. See ARCHITECTURE.md#styling.
+ * Thin wrapper over MUI's `Button`, themed via `src/lib/mui/theme.ts`.
  */
-export const Button = forwardRef<HTMLButtonElement, ButtonHTMLAttributes<HTMLButtonElement>>(
-  ({ className, ...props }, ref) => (
-    <button
-      ref={ref}
-      className={clsx(
-        'inline-flex items-center justify-center rounded-md bg-slate-900 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-slate-700 disabled:cursor-not-allowed disabled:opacity-50',
-        className
-      )}
-      {...props}
-    />
-  )
+export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
+  ({ variant = 'primary', ...props }, ref) => {
+    const { variant: muiVariant, color } = VARIANT_MAP[variant]
+    return <MuiButton ref={ref} variant={muiVariant} color={color} {...props} />
+  }
 )
 Button.displayName = 'Button'

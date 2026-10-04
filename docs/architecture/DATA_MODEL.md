@@ -53,7 +53,7 @@ is the same value, just the row your app actually joins against.
 | ---------------------- | ----------------------------- | -------------------------------------------------------------------- | ------- |
 | User                    | `auth.users`                  | managed by Supabase Auth                                              | ✅ built-in |
 | Profile                 | `public.profiles`             | `supabase/migrations/20260100000000_create_profiles_table.sql`        | ✅ implemented — auto-created via `on_auth_user_created` trigger |
-| Goal                    | `public.goals`                | `supabase/migrations/20260101000000_create_goals_table.sql`           | ✅ implemented |
+| Goal                    | `public.goals`                | `supabase/migrations/20260101000000_create_goals_table.sql`           | ⚠️ implemented, but **out of sync** — still a single `target_date` column; `kowabowa`'s `IGoalModel` has required `startDate`/`endDate` instead |
 | Competencies/Skills     | `public.competencies`         | `supabase/migrations/20260102000000_create_competencies_table.sql`    | ✅ implemented |
 | Raw logs                | `public.raw_logs` + `public.raw_log_competencies` (join table) | `supabase/migrations/20260103000000_create_raw_logs_table.sql` | ✅ implemented |
 
@@ -65,6 +65,13 @@ Every entity follows the same shape across both repos:
 - `kowabowa`: interface (`src/interfaces/`), adapter (`src/adapters/`),
   API service (`src/api/`), feature module (`src/modules/<entity>/`),
   routes (`src/constants/routes.ts`), pages (`src/app/<entity>/`).
+
+The table above tracks the **backend's** status — the data layer
+(interface/adapter/API service) for every entity in `kowabowa` is real and
+functional, but the **UI** (`src/modules/<entity>/components/`,
+`src/app/<entity>/`) for every entity, including Raw logs, has been
+intentionally stripped down to scaffolding for practice — see
+`ARCHITECTURE.md` for current status.
 
 `profiles` is the one exception — it's written only by the database
 trigger, never by application code, so it has no Edge Function, adapter,

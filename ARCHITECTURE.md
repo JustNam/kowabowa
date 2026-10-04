@@ -8,19 +8,24 @@ Iteration with AI — a distilled, teaching-sized version of a real
 production codebase (see `docs/architecture/DATA_MODEL.md` for the data
 model, and the companion full-scale app for what this grows into).
 
-**This is the frontend.** The database schema and business-domain API
-(everything except auth) live in a separate companion repo,
-[`kowabowa-backend`](../kowabowa-backend), as Supabase Edge Functions.
-Both repos deploy into the *same* Supabase project — it's one backing
-service split across two codebases, not two servers. See
-[Two Repos, One Backing Service](#two-repos-one-backing-service) below.
+**This is the frontend.** Business-domain writes (Goals, Competencies/Skills,
+Raw logs) go through Supabase Edge Functions reached via
+`src/lib/backendApi.ts` (Bearer token), not a route in this repo — that
+backend lives in a separate companion repo and is **not actively kept in
+sync** with this one (e.g. its `goals` migration still has a single
+`target_date` column; this repo's `IGoalModel` has `startDate`/`endDate`).
+Treat it as a reference for the Edge Function shape, not a live contract.
 
-Goals, Competencies/Skills, and Raw logs are all implemented end to end,
-each following the same shape — see `docs/architecture/DATA_MODEL.md` and
-`kowabowa-backend`'s `CLAUDE.md` for the pattern. `auth.users` has a
-companion `public.profiles` table (Supabase best practice — see
-DATA_MODEL.md for why) that's written only by a database trigger, not
-application code.
+Every feature's UI — Goals, Competencies/Skills, Raw logs, Dashboard,
+Login, Forgot password, and Onboarding — has been stripped down to
+scaffolding + guidance comments for practice (see each file's `TODO`
+comment block). What's real and worth studying instead of a single
+"reference feature": each feature's data layer (interfaces, adapters,
+API service classes, validation), the shared primitives in `src/atoms/`,
+and the TODO comments in the stub you're rebuilding, which name the exact
+hooks/API classes/validation functions to wire up. `auth.users` has a companion `public.profiles` table
+(Supabase best practice — see `DATA_MODEL.md` for why) that's written only
+by a database trigger, not application code.
 
 ---
 
@@ -28,10 +33,10 @@ application code.
 
 - **Next.js** (App Router)
 - **TypeScript** (strict mode, interfaces for all data)
-- **TailwindCSS** (utility-first styling, no component library)
+- **TailwindCSS** (utility-first styling for one-off layout)
+- **MUI** (Material UI — component library backing `src/atoms/`)
 - **Supabase** (Postgres, Auth)
 - **Axios** (HTTP requests to our own API routes)
-- **Yup** (form validation)
 
 Deliberately **not** included yet, even though the full production app
 uses them — each earns its place in a later lesson instead of being
@@ -40,66 +45,32 @@ cargo-culted in on day one:
 - A global state library (RxJS, Zustand, etc.) — React's `useState` +
   Context is enough for one feature. Reach for one when prop-drilling
   actually hurts, not before.
-- A component library (MUI, shadcn/ui) — plain Tailwind + a few atoms
-  keeps "what does this render as HTML" legible while you're still
-  learning the DOM/CSS layer underneath any library.
-- Testing/Storybook tooling — see `e2e/README.md`; added once there's
-  enough surface area to justify it.
+- Testing/Storybook tooling — added once there's enough surface area to
+  justify it (no `e2e/` directory yet).
 
 ---
 
 ## The 3-Layer Architecture
 
-Every feature in this app crosses the same three layers, in the same
-direction, always. The middle layer splits across the two repos:
-
-```
-┌─────────────┐      ┌───────────────────────┐      ┌────────────┐
-│   Client     │ ───▶ │  Business-domain API    │ ───▶ │  Supabase   │
-│ (UI + hooks) │ ◀─── │  (kowabowa-backend,      │ ◀─── │ (Postgres)  │
-│              │      │   Edge Functions)         │      │             │
-└─────────────┘      └───────────────────────┘      └────────────┘
-     camelCase          Bearer token · snake_case        snake_case
-
-┌─────────────┐      ┌──────────────────┐
-│   Client     │ ───▶ │  Auth API route    │ ──▶ Supabase Auth (cookies)
-│ (UI + hooks) │ ◀─── │  (src/app/api/auth) │
-└─────────────┘      └──────────────────┘
-```
+Every feature crosses the same three layers, in the same direction:
+**Client (UI + hooks) → API layer → Supabase.**
 
 - **Client**: React components. Never talk to Supabase directly for
-  anything that mutates data — always go through an API layer, so auth
-  checks and validation live in exactly one place.
-- **Business-domain API** (`kowabowa-backend`, separate repo): Edge
-  Functions are the trust boundary for Goals (and, once you build them,
-  Competencies/Skills and Raw logs). Each one forwards the caller's
-  Bearer token into its Supabase client so `auth.getUser()` resolves the
-  real caller, then explicitly filters every query by `user_id` — **not**
-  Postgres Row Level Security, which is deliberately off for now
-  (see `kowabowa-backend/CLAUDE.md#auth-model`).
-- **Auth API route** (`src/app/api/auth/**`, *this* repo): the one piece
-  of "backend" that stays in the frontend, because signing in/up/out needs
-  to set httpOnly cookies for Next.js SSR — something an Edge Function,
-  reached cross-origin, can't do for this app.
-- **Supabase**: Postgres, shared by both paths above.
+  anything that mutates data.
+- **API layer** — two different paths depending on the feature:
+  - Business-domain resources (Goals, Competencies/Skills, Raw logs) go
+    through `src/lib/backendApi.ts`, which attaches the signed-in user's
+    session as `Authorization: Bearer <token>` and calls a Supabase Edge
+    Function in the companion backend repo.
+  - Auth (sign in/up/out) goes through this repo's own
+    `src/app/api/auth/**` Next.js routes instead, because establishing a
+    session needs to set httpOnly cookies, which only this app's own
+    server can do.
+- **Supabase**: Postgres + Auth, the source of truth either way.
 
 This is why `GoalsApi.create()` doesn't call Supabase directly — it POSTs
-to the `goals` Edge Function in `kowabowa-backend`, which is the only
-thing that touches `supabase.from('goals')`.
-
-## Two Repos, One Backing Service
-
-| | `kowabowa` (this repo) | `kowabowa-backend` |
-| --- | --- | --- |
-| Owns | UI, routing, auth cookies | DB schema, business-domain API |
-| Deploys as | Next.js app (e.g. Vercel) | Supabase Edge Functions |
-| Talks to Postgres via | Supabase Auth only | Every table except `auth.users` |
-| Called with | — | Bearer token (`Authorization` header) |
-
-Both point at the same Supabase project (same `NEXT_PUBLIC_SUPABASE_URL`).
-Running everything locally means: `supabase start` once, from
-`kowabowa-backend` (it owns `supabase/migrations/` and `supabase/config.toml`),
-then `npm run dev` here with `.env.local` pointed at that same instance.
+through `backendApi`, and no code in this repo ever touches
+`supabase.from('goals')`.
 
 ---
 
@@ -111,22 +82,23 @@ src/
                  # auth API routes ONLY (src/app/api/auth/**)
   api/           # Client-side API service classes (e.g. goals.ts)
   adapters/      # snake_case (DB) <-> camelCase (frontend) conversion
-  atoms/         # Pure, reusable UI primitives (button/, input/, modal/)
-  components/    # App-wide React components (AuthProvider, PageLayout)
+  atoms/         # Pure, reusable UI primitives (button/, input/, textarea/,
+                 # select/, modal/, date-picker/) — themed MUI wrappers
+  components/    # App-wide React components (AuthProvider, Sidebar, PageLayout)
   modules/       # Feature modules — UI + schema, one folder per feature
   hooks/         # Custom hooks (useAuth.ts)
-  lib/           # External library config (supabase/, axios.ts, backendApi.ts)
+  lib/           # External library config (supabase/, mui/, axios.ts, backendApi.ts)
   interfaces/    # TypeScript interfaces/models
   constants/     # Route constants, enums
   config/        # Environment configuration
   middleware.ts  # Auth-based route protection
 docs/
   architecture/  # DATA_MODEL.md and friends
-e2e/             # Playwright specs (added later — see e2e/README.md)
 ```
 
-`supabase/migrations/` and `supabase/functions/` live in the companion
-[`kowabowa-backend`](../kowabowa-backend) repo, not here.
+No `supabase/` directory here — the DB schema and Edge Functions live in
+the separate companion backend repo (see Overview above for why that's
+not a live contract).
 
 **Conventions:**
 
@@ -151,17 +123,15 @@ e2e/             # Playwright specs (added later — see e2e/README.md)
 ## Example: Feature Module Structure
 
 ```
-src/modules/goals/
+src/modules/raw-logs/
   components/
-    list/index.tsx      # GoalsApi.list() -> GET goals (kowabowa-backend); renders the Modal below
-    create/index.tsx     # Modal (open/onClose/onCreated props), Yup-validated, GoalsApi.create()
-    detail/index.tsx     # GoalsApi.detail(id) -> GET goals/:id
-  schema.ts              # Yup validation schema for the create form
+    list/index.tsx      # RawLogsApi.list(goalId?) -> GET raw-logs; renders the Create modal
+    create/index.tsx     # Modal (open/onClose/onCreated/defaultGoalId), validateRawLogForm()-validated, RawLogsApi.create()
+  schema.ts              # validateRawLogForm() for the create form
 ```
 
-Every feature you add (Competencies/Skills, Raw logs) should look exactly
-like this — same three sub-components, same `schema.ts`. `create/` is a
-modal rendered by `list/`, not a page — no `src/app/<feature>/create/`.
+Goals also needs a `detail/` sub-component (`GoalsDetail`) once rebuilt;
+raw-logs doesn't have one since logs don't get their own page.
 
 ---
 
@@ -190,7 +160,7 @@ own module folder instead.
 ## Authentication
 
 Supabase Auth with SSR cookie-based sessions — this part is entirely
-within this repo, unlike Goals/Competencies/Raw-logs.
+within this repo.
 
 - `src/lib/supabase/client.ts` — browser client (Client Components).
 - `src/lib/supabase/server.ts` — server client (Server Components, route
@@ -200,15 +170,12 @@ within this repo, unlike Goals/Competencies/Raw-logs.
 - `src/app/api/auth/{signin,signup,signout}/route.ts` — the only code
   that calls `supabase.auth.*` for writes; the client goes through these.
 
-**Reaching `kowabowa-backend` with that session**: Edge Functions are a
-different origin and never see this app's cookies, so
+**Reaching the business-domain backend with that session**: Edge
+Functions are a different origin and never see this app's cookies, so
 `src/lib/backendApi.ts` reads the current Supabase session client-side and
-attaches it as `Authorization: Bearer <access_token>` on every request.
-The Edge Function forwards that same header into its own Supabase client
-so `auth.getUser()` resolves the signed-in user — cookies authenticate you
-to *this* app, the bearer token authenticates you to the *backend*. That
-token does **not** currently gate which rows a query can touch, though —
-see `kowabowa-backend/CLAUDE.md#auth-model` for why (no RLS yet).
+attaches it as `Authorization: Bearer <access_token>` on every request —
+cookies authenticate you to *this* app, the bearer token authenticates
+you to the backend.
 
 ---
 
@@ -232,7 +199,7 @@ bare `fetch()` in a component. Two different HTTP clients underneath,
 depending on where the feature's logic lives:
 
 ```ts
-// src/api/goals.ts — business-domain resource, calls kowabowa-backend
+// src/api/goals.ts — business-domain resource, calls the Edge Function backend
 import { backendApi } from '@/lib/backendApi'
 
 export class GoalsApi {
@@ -260,13 +227,6 @@ export class AuthApi {
 Next.js Route Handlers, auth-only. Authenticate via `createClient()` from
 `src/lib/supabase/server.ts`.
 
-### The business-domain API (`kowabowa-backend`)
-
-Not in this repo. One Supabase Edge Function per resource
-(`supabase/functions/goals/index.ts` there), each scoped to `user.id` by
-the function's own query filters — RLS isn't wired up yet. See that repo's
-`CLAUDE.md` before adding Competencies/Skills or Raw logs.
-
 ---
 
 ## Routing
@@ -289,26 +249,38 @@ router.push(ROUTES.GOALS.DETAIL(goalId))
 
 `src/middleware.ts` handles the auth-based redirects (unauthenticated →
 `/login`, authenticated hitting `/login` → `ROUTES.POST_LOGIN_REDIRECT`,
-currently `/dashboard`).
-
-Full page/modal inventory — including screens not built yet — lives in
-`docs/architecture/PAGE_INVENTORY.md`.
+currently `/dashboard`). New users land on `/onboarding` right after
+signup instead (see `src/app/onboarding/page.tsx`).
 
 ---
 
 ## Styling
 
-- TailwindCSS utility classes directly in JSX. No SCSS modules, no CSS-in-JS.
-- Shared primitives live in `src/atoms/` as thin wrappers that accept
-  `className` and merge it with `clsx` — compose Tailwind, don't fight it.
+- Shared visual primitives (buttons, inputs, textareas, selects, modals,
+  the date picker) are themed MUI components, wrapped in `src/atoms/` —
+  see `src/lib/mui/theme.ts` for the project's palette/shape tokens and
+  `src/lib/mui/ThemeRegistry.tsx` for the Next.js App Router SSR
+  integration (Emotion cache + `ThemeProvider`, wired into
+  `src/app/layout.tsx`).
+- TailwindCSS utility classes are still used directly in JSX for one-off
+  layout in feature code (flex/grid, spacing, etc.) — they're not used to
+  build new shared primitives; reach for an existing atom (or MUI
+  directly, themed) for that instead. No SCSS modules, no other
+  CSS-in-JS.
 
 ---
 
 ## Validation
 
-Yup schemas, colocated with the feature that uses them
-(`src/modules/<feature>/schema.ts`), validated on submit before any
-network call is made.
+Yup has been removed. The one documented pattern is a plain hand-written
+validation function, validated on submit before any network call is
+made — colocated in the create component itself when there's a single
+field (`validateName()` in
+`src/modules/competencies/components/create/index.tsx`), or in the
+feature's `schema.ts` when the form has several fields (`validateGoalForm()`
+in `src/modules/goals/schema.ts`, and its equivalent in
+`src/modules/raw-logs/schema.ts`). Follow this pattern when building a new
+feature.
 
 ---
 
@@ -318,9 +290,9 @@ network call is made.
 - Never call Supabase from a Client Component for anything that writes data.
 - Don't introduce a library (state manager, component kit, test runner)
   before the problem it solves actually shows up in this codebase.
-- When in doubt, open `src/modules/goals/` here and
-  `supabase/functions/goals/` in `kowabowa-backend`, and copy the shape —
-  that's what they're there for.
+- When in doubt, read the stub's `TODO` comment block and the feature's
+  data layer (interface/adapter/API service) for the shape to build
+  toward.
 
 ---
 
@@ -328,11 +300,15 @@ network call is made.
 
 Don't build ahead of these — they're left as-is on purpose:
 
-- `competencies` / `raw_logs` functions + UI
-- Design/Plan/Implement/Test/Document loop
-- Playwright e2e coverage
-- Row Level Security on `public.goals`
-- Auth hardening, RBAC, secrets handling
-- Locking down `kowabowa-backend`'s wildcard CORS
+- Goals, Competencies/Skills, Raw logs, Dashboard, Login, Forgot
+  password, and Onboarding — stripped down to scaffolding + guidance
+  comments for practice. Each stub's own `TODO` comment block names the
+  data layer (interface/adapter/API service/validation) to wire up.
+- Achievements (see `docs/architecture/DATA_MODEL.md`) — explicitly out
+  of scope, not a gap to fill.
+- Goal edit/delete, status-change UI.
+- Design/Plan/Implement/Test/Document loop.
+- Playwright e2e coverage.
+- Auth hardening, RBAC, secrets handling.
 
 See `docs/architecture/DATA_MODEL.md` for the full data model.
