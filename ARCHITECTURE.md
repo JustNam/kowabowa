@@ -21,9 +21,9 @@ Login, Forgot password, and Onboarding — has been stripped down to
 scaffolding + guidance comments for practice (see each file's `TODO`
 comment block). What's real and worth studying instead of a single
 "reference feature": each feature's data layer (interfaces, adapters,
-API service classes, validation), the shared primitives in `src/atoms/`,
+and API service classes), the shared primitives in `src/atoms/`,
 and the TODO comments in the stub you're rebuilding, which name the exact
-hooks/API classes/validation functions to wire up. `auth.users` has a companion `public.profiles` table
+hooks/API classes to wire up. `auth.users` has a companion `public.profiles` table
 (Supabase best practice — see `DATA_MODEL.md` for why) that's written only
 by a database trigger, not application code.
 
@@ -82,9 +82,10 @@ src/
                  # auth API routes ONLY (src/app/api/auth/**)
   api/           # Client-side API service classes (e.g. goals.ts)
   adapters/      # snake_case (DB) <-> camelCase (frontend) conversion
-  atoms/         # Pure, reusable UI primitives (button/, input/, textarea/,
-                 # select/, modal/, date-picker/) — themed MUI wrappers
-  components/    # App-wide React components (AuthProvider, Sidebar, PageLayout)
+  atoms/         # Pure UI primitives, no business logic (button/, input/,
+                 # textarea/, select/, modal/, date-picker/) — themed MUI wrappers
+  components/    # App-wide components that DO hold logic/state (AuthProvider:
+                 # auth context, Sidebar: nav + auth-aware rendering, PageLayout: shell)
   modules/       # Feature modules — UI + schema, one folder per feature
   hooks/         # Custom hooks (useAuth.ts)
   lib/           # External library config (supabase/, mui/, axios.ts, backendApi.ts)
@@ -126,8 +127,7 @@ not a live contract).
 src/modules/raw-logs/
   components/
     list/index.tsx      # RawLogsApi.list(goalId?) -> GET raw-logs; renders the Create modal
-    create/index.tsx     # Modal (open/onClose/onCreated/defaultGoalId), validateRawLogForm()-validated, RawLogsApi.create()
-  schema.ts              # validateRawLogForm() for the create form
+    create/index.tsx     # Modal (open/onClose/onCreated/defaultGoalId), RawLogsApi.create()
 ```
 
 Goals also needs a `detail/` sub-component (`GoalsDetail`) once rebuilt;
@@ -270,20 +270,6 @@ signup instead (see `src/app/onboarding/page.tsx`).
 
 ---
 
-## Validation
-
-Yup has been removed. The one documented pattern is a plain hand-written
-validation function, validated on submit before any network call is
-made — colocated in the create component itself when there's a single
-field (`validateName()` in
-`src/modules/competencies/components/create/index.tsx`), or in the
-feature's `schema.ts` when the form has several fields (`validateGoalForm()`
-in `src/modules/goals/schema.ts`, and its equivalent in
-`src/modules/raw-logs/schema.ts`). Follow this pattern when building a new
-feature.
-
----
-
 ## Best Practices
 
 - Keep components small; one responsibility each.
@@ -303,7 +289,7 @@ Don't build ahead of these — they're left as-is on purpose:
 - Goals, Competencies/Skills, Raw logs, Dashboard, Login, Forgot
   password, and Onboarding — stripped down to scaffolding + guidance
   comments for practice. Each stub's own `TODO` comment block names the
-  data layer (interface/adapter/API service/validation) to wire up.
+  data layer (interface/adapter/API service) to wire up.
 - Achievements (see `docs/architecture/DATA_MODEL.md`) — explicitly out
   of scope, not a gap to fill.
 - Goal edit/delete, status-change UI.
