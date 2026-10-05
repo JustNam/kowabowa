@@ -27,11 +27,12 @@ reference, not a live contract.
 | Skills (Competencies)  | 🔲 scaffolded — practice exercise (same split as Goals) |
 | Logs (Raw logs)        | 🔲 scaffolded — practice exercise, data layer is real |
 
-Every feature follows the same shape — see `src/modules/raw-logs/` +
-`src/api/rawLogs.ts` for the directory/file conventions. All feature UIs
-have been intentionally stripped down to scaffolding + guidance comments
-for practice; each feature's data layer (interface/adapter/API
-service/validation) is real and functional.
+Every feature follows the same shape — see each feature's data layer
+(`src/interfaces/`, `src/adapters/`, `src/api/`) and the TODO comments in
+each stub for the conventions. All feature UIs have been intentionally
+stripped down to scaffolding + guidance comments for practice; each
+feature's data layer (interface/adapter/API service) is real and
+functional.
 
 ## Getting started
 
@@ -72,7 +73,7 @@ src/
   app/        # pages + auth API routes only (src/app/api/auth/**)
   api/        # client-side API service classes
   adapters/   # snake_case <-> camelCase conversion
-  atoms/      # Button, Input, Textarea, Select, Modal
+  atoms/      # Button, Input, Textarea, Select, Modal, DatePicker
   modules/    # feature modules: goals/, competencies/, raw-logs/
   lib/        # axios.ts (auth, cookie-based) + backendApi.ts (Bearer token)
   ...
