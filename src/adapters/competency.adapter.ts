@@ -8,7 +8,9 @@ export class CompetencyAdapter
     return {
       id: dbData.id,
       userId: dbData.user_id,
-      name: dbData.name,
+      title: dbData.title,
+      description: dbData.description,
+      isSystem: dbData.is_system ?? false,
       createdAt: dbData.created_at,
     }
   }
@@ -17,7 +19,9 @@ export class CompetencyAdapter
     return {
       id: frontendData.id,
       user_id: frontendData.userId,
-      name: frontendData.name,
+      title: frontendData.title,
+      description: frontendData.description,
+      is_system: frontendData.isSystem,
       created_at: frontendData.createdAt,
     }
   }

@@ -1,7 +1,10 @@
 export interface RawLogFormValues {
-  goalId: string
+  title: string
   description: string
-  competencyIds: string[]
+  goalId: string
+  skillId: string
+  loggedAt: string
+  isAchievement: boolean
 }
 
 export function validateRawLogForm(
@@ -9,13 +12,17 @@ export function validateRawLogForm(
 ): Partial<Record<keyof RawLogFormValues, string>> {
   const errors: Partial<Record<keyof RawLogFormValues, string>> = {}
 
+  const title = values.title.trim()
+  if (!title) errors.title = 'Title is required'
+  else if (title.length > 120) errors.title = 'Keep it under 120 characters'
+
   if (!values.goalId) errors.goalId = 'Pick a goal'
 
-  const description = values.description.trim()
-  if (!description) errors.description = 'Description is required'
-  else if (description.length > 500) errors.description = 'Keep it under 500 characters'
+  if (!values.loggedAt) errors.loggedAt = 'Date is required'
 
-  if (values.competencyIds.length === 0) errors.competencyIds = 'Pick at least one skill'
+  if (values.description.trim().length > 500) {
+    errors.description = 'Keep it under 500 characters'
+  }
 
   return errors
 }

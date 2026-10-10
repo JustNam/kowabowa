@@ -14,8 +14,8 @@ import type { IGoalModel, IGoalCreateRequest, IGoalDatabaseModel } from '@/inter
  */
 export class GoalsApi {
   static async list(): Promise<{ data: IGoalModel[] }> {
-    const response = await backendApi.get<{ data: IGoalDatabaseModel[] }>('/goals')
-    return { data: goalAdapter.listToFrontend(response.data.data) }
+    const response = await backendApi.get<IGoalDatabaseModel[]>('/goals')
+    return { data: goalAdapter.listToFrontend(response.data) }
   }
 
   static async detail(id: string): Promise<{ data: IGoalModel }> {
