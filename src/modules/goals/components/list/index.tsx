@@ -1,4 +1,8 @@
-'use client'
+"use client";
+
+import { Button } from "@/atoms/button";
+import { useState } from "react";
+import { GoalsCreate } from "../create";
 
 // TODO: build the Goals list.
 // - Fetch goals on mount with `GoalsApi.list()` ('@/api/goals'); hold
@@ -9,5 +13,18 @@
 //   `GoalsCreate` from '../create', manage its open/closed state here,
 //   and pass it an `onCreated` callback that refetches the list.
 export function GoalsList() {
-  return null
+  const [createOpen, setCreateOpen] = useState(false);
+
+  return (
+    <div className="flex flex-col gap-4">
+      <div>
+        <Button onClick={() => setCreateOpen(true)}>Create Goal</Button>
+      </div>
+      <GoalsCreate
+        open={createOpen}
+        onClose={() => setCreateOpen(false)}
+        onCreated={() => console.log("Goal created")}
+      />
+    </div>
+  );
 }
