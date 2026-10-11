@@ -5,7 +5,7 @@ import { CompetenciesApi } from '@/api/competencies'
 import { Button } from '@/atoms/button'
 import { Input } from '@/atoms/input'
 import { Modal } from '@/atoms/modal'
-import { validateName } from '../../schema'
+import { validateTitle } from '../../schema'
 
 interface CompetenciesCreateProps {
   open: boolean
@@ -14,12 +14,12 @@ interface CompetenciesCreateProps {
 }
 
 export function CompetenciesCreate({ open, onClose, onCreated }: CompetenciesCreateProps) {
-  const [name, setName] = useState('')
+  const [title, setTitle] = useState('')
   const [error, setError] = useState<string | null>(null)
   const [submitting, setSubmitting] = useState(false)
 
   const handleClose = () => {
-    setName('')
+    setTitle('')
     setError(null)
     onClose()
   }
@@ -27,7 +27,7 @@ export function CompetenciesCreate({ open, onClose, onCreated }: CompetenciesCre
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault()
 
-    const validationError = validateName(name)
+    const validationError = validateTitle(title)
     if (validationError) {
       setError(validationError)
       return
@@ -36,7 +36,7 @@ export function CompetenciesCreate({ open, onClose, onCreated }: CompetenciesCre
     setSubmitting(true)
     setError(null)
     try {
-      await CompetenciesApi.create({ name: name.trim() })
+      await CompetenciesApi.create({ title: title.trim() })
       onCreated()
       handleClose()
     } catch {
@@ -50,9 +50,9 @@ export function CompetenciesCreate({ open, onClose, onCreated }: CompetenciesCre
     <Modal open={open} onClose={handleClose} title="Add skill">
       <form onSubmit={handleSubmit} noValidate className="flex flex-col gap-4 pt-1">
         <Input
-          label="Name"
-          value={name}
-          onChange={(e) => setName(e.target.value)}
+          label="Title"
+          value={title}
+          onChange={(e) => setTitle(e.target.value)}
           error={Boolean(error)}
           helperText={error}
           autoFocus

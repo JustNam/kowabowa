@@ -10,6 +10,7 @@ export class CompetencyAdapter
       userId: dbData.user_id,
       name: dbData.name,
       createdAt: dbData.created_at,
+      isSystem: dbData.is_system // bổ sung thêm vì chưa thấy
     }
   }
 
@@ -19,6 +20,7 @@ export class CompetencyAdapter
       user_id: frontendData.userId,
       name: frontendData.name,
       created_at: frontendData.createdAt,
+      is_system: frontendData.isSystem // bổ sung thêm vì chưa thấy
     }
   }
 
