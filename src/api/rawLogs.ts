@@ -9,15 +9,15 @@ import type {
 export class RawLogsApi {
   /** Omit goalId to fetch every log for the current user. */
   static async list(goalId?: string): Promise<{ data: IRawLogModel[] }> {
-    const response = await backendApi.get<{ logs: IRawLogDatabaseModel[] }>('/logs', {
+    const response = await backendApi.get<{ data: IRawLogDatabaseModel[] }>('/logs', {
       params: goalId ? { goal_id: goalId } : undefined,
     })
-    return { data: rawLogAdapter.listToFrontend(response.data.logs) }
+    return { data: rawLogAdapter.listToFrontend(response.data.data) }
   }
 
   static async create(payload: IRawLogCreateRequest): Promise<{ data: IRawLogModel }> {
     const dbPayload = rawLogAdapter.createRequestToDatabase(payload)
-    const response = await backendApi.post<{ log: IRawLogDatabaseModel }>('/logs', dbPayload)
-    return { data: rawLogAdapter.toFrontend(response.data.log) }
+    const response = await backendApi.post<{ data: IRawLogDatabaseModel }>('/logs', dbPayload)
+    return { data: rawLogAdapter.toFrontend(response.data.data) }
   }
 }
