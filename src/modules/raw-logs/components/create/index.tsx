@@ -1,5 +1,8 @@
 'use client'
 
+import { useRouter } from 'next/navigation'
+import { ROUTES } from '@/constants/routes'
+
 import { Modal } from '@/atoms/modal'
 import { Input } from '@/atoms/input'
 import { Textarea } from '@/atoms/textarea'
@@ -7,14 +10,21 @@ import { DatePicker } from '@/atoms/date-picker'
 import { Button } from '@/atoms/button'
 import { MenuItem, Checkbox, FormControlLabel, Chip } from '@mui/material'
 import { Select } from '@/atoms/select'
+import { AchievementModal } from '../achievement-modal'
 import { useState, useEffect } from 'react'
 import { validateRawLogForm, type RawLogFormValues } from '../../schema'
 import { format, parse, isValid } from 'date-fns'
 import { GoalsApi } from '@/api/goals'
+import { RawLogsApi } from '@/api/rawLogs'
 import { CompetenciesApi } from '@/api/competencies'
 import type { IGoalModel } from '@/interfaces/goal.model'
+import type { IRawLogModel } from '@/interfaces/raw-log.model'
 import type { ICompetencyModel } from '@/interfaces/competency.model'
-import { RawLogsApi } from '@/api/rawLogs'
+
+export interface IachievementInfo {
+  log: IRawLogModel
+  goal: IGoalModel
+}
 
 interface RawLogsCreateProps {
   open: boolean
@@ -27,6 +37,7 @@ interface RawLogsCreateProps {
 interface RawLogsFormProps {
   onClose: () => void
   onCreated: () => void
+  onAchievement?: (info: { log: IRawLogModel; goal: IGoalModel }) => void
 }
 
 // TODO: build the Log work form, rendered inside the Modal below.
@@ -44,7 +55,7 @@ interface RawLogsFormProps {
 //   auto-select the new skill in this form, so the user keeps their place
 //   (the other fields they already filled in must not be reset).
 
-export function RawLogsForm({ onClose, onCreated }: RawLogsFormProps) {
+export function RawLogsForm({ onClose, onCreated, onAchievement }: RawLogsFormProps) {
   const [values, setValues] = useState<RawLogFormValues>({
     title: '',
     description: '',
@@ -76,9 +87,14 @@ export function RawLogsForm({ onClose, onCreated }: RawLogsFormProps) {
     setSubmitting(true)
     setSubmitError(null)
     try {
-      await RawLogsApi.create(values)
+      const { data: log } = await RawLogsApi.create(values)
       onCreated()
       onClose()
+      if (log.isAchievement) {
+        const { data: freshGoals } = await GoalsApi.list()
+        const goal = freshGoals.find((g) => g.id === log.goalId)
+        if (goal) onAchievement?.({ log, goal })
+      }
     } catch (err) {
       setSubmitError(err instanceof Error ? err.message : 'Could not save the log')
     } finally {
@@ -142,17 +158,18 @@ export function RawLogsForm({ onClose, onCreated }: RawLogsFormProps) {
         slotProps={{
           select: {
             renderValue: (selected) => {
-              const skill = skills.find((s) => s.id === selected as string)
+              const skill = skills.find((s) => s.id === (selected as string))
               if (!skill) return null
               return (
-                <Chip 
-                label={skill.title}
-                size='small'
-                onDelete={() => setValues({...values, skillId: ''})}
-                onMouseDown={(e) => e.stopPropagation()} />
+                <Chip
+                  label={skill.title}
+                  size="small"
+                  onDelete={() => setValues({ ...values, skillId: '' })}
+                  onMouseDown={(e) => e.stopPropagation()}
+                />
               )
-            }
-          }
+            },
+          },
         }}
       >
         {skills.map((skill) => (
@@ -195,9 +212,28 @@ export function RawLogsForm({ onClose, onCreated }: RawLogsFormProps) {
 }
 
 export function RawLogsCreate({ open, onClose, onCreated }: RawLogsCreateProps) {
+  const router = useRouter()
+  const [achievement, setAchievement] = useState<IachievementInfo | null>(null)
   return (
-    <Modal open={open} onClose={onClose} title="Add log">
-      <RawLogsForm onClose={onClose} onCreated={onCreated} />
-    </Modal>
+    <>
+      <Modal open={open} onClose={onClose} title="Add log">
+        <RawLogsForm onClose={onClose} onCreated={onCreated} onAchievement={setAchievement} />
+      </Modal>
+
+      {achievement && (
+        <AchievementModal
+          open
+          onClose={() => setAchievement(null)}
+          onView={() => {
+            router.push(ROUTES.GOALS.DETAIL(achievement.goal.id))
+            setAchievement(null)
+          }}
+          goalTitle={achievement.goal.title}
+          logTitle={achievement.log.title}
+          loggedAt={achievement.log.loggedAt}
+          achievementCount={achievement.goal.achievementsCount}
+        />
+      )}
+    </>
   )
 }
