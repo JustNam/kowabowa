@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
-import { usePathname } from 'next/navigation'
+import { usePathname, useRouter } from 'next/navigation'
 import clsx from 'clsx'
 import { useAuth } from '@/components/AuthProvider'
 import { ROUTES } from '@/constants/routes'
@@ -28,10 +28,14 @@ const links = [
 export function Sidebar() {
   const { user, signOut } = useAuth()
   const pathname = usePathname()
+  const router = useRouter()
   const [collapsed, setCollapsed] = useState(false)
   const [quickLogOpen, setQuickLogOpen] = useState(false)
 
   if (!user) return null
+  // if (pathname === ROUTES.ONBOARDING) return null // Xử lý drop onboarding cho làm lại onboarding
+  const hiddenRoutes: string[] = [ROUTES.LOGIN, ROUTES.FORGOT_PASSWORD, ROUTES.ONBOARDING]
+  if (hiddenRoutes.includes(pathname)) return null // Xử lý danh sách các đường dẫn ko được hiện sidebar
 
   const initial = (user.email ?? '?')[0]!.toUpperCase()
 
@@ -113,7 +117,11 @@ export function Sidebar() {
           </span>
           <button
             type="button"
-            onClick={() => signOut()}
+            onClick={async () => {
+              await signOut()
+              router.push(ROUTES.LOGIN)
+            }
+            }
             title={collapsed ? 'Sign out' : undefined}
             className="text-sm text-slate-500 hover:text-slate-900"
           >
@@ -125,7 +133,7 @@ export function Sidebar() {
       <RawLogsCreate
         open={quickLogOpen}
         onClose={() => setQuickLogOpen(false)}
-        onCreated={() => {}}
+        onCreated={() => { }}
       />
     </>
   )

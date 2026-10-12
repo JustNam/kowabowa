@@ -3,6 +3,7 @@ import { useState, type FormEvent } from 'react'
 import {format, isValid} from 'date-fns'
 import {validateGoalForm} from '@/modules/goals/schema'
 import { GoalsApi } from '@/api/goals'
+import { ProfilesApi } from '@/api/profiles'
 import { Input } from '@/atoms/input'
 import { Textarea } from '@/atoms/textarea'
 import { Button } from '@/atoms/button'
@@ -49,6 +50,7 @@ export function OnboardingForm() {
         setServerError('')
         try {
             await GoalsApi.create(values)
+            await ProfilesApi.completeOnboarding()
             router.push(ROUTES.GOALS.LIST)
         } catch (err) {
             setServerError ((err as Error).message)
