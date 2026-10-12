@@ -11,7 +11,8 @@ export class CompetencyAdapter
       title: dbData.title,
       createdAt: dbData.created_at,
       isSystem: dbData.is_system, // bổ sung thêm vì chưa thấy
-      description: dbData.description
+      // ?? null: backend may omit the field entirely (undefined) — normalize to null
+      description: dbData.description ?? null
     }
   }
 
