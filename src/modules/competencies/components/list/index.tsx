@@ -70,12 +70,12 @@ export function CompetenciesList() {
         <p className="text-sm text-gray-500">No skills yet. Add your first one.</p>
       )}
 
-      // define skill người dùng và skill predefine riêng
+      {/*define skill người dùng và skill predefine riêng*/}
       {userSkills.length > 0 && (
         <ul className="flex flex-wrap gap-2">
           {skills.map((skill) => (
             <li key={skill.id}>
-              <Chip label={skill.name} />
+              <Chip label={skill.title} />
             </li>
           ))}
         </ul>
