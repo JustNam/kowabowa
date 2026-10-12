@@ -340,7 +340,7 @@ export function CompetenciesList() {
           <SkillGroup
             title="System skills"
             skills={systemSkills}
-            emptyMessage={isSearching ? 'No skills match your search.' : 'No skills system.'}
+            emptyMessage={isSearching ? 'No skills match your search.' : 'No system skills.'}
             onEdit={handleEdit}
             onDelete={handleDelete}
           />
