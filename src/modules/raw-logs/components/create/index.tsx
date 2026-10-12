@@ -38,6 +38,7 @@ interface RawLogsFormProps {
   onClose: () => void
   onCreated: () => void
   onAchievement?: (info: { log: IRawLogModel; goal: IGoalModel }) => void
+  defaultGoalId?: string
 }
 
 // TODO: build the Log work form, rendered inside the Modal below.
@@ -55,11 +56,16 @@ interface RawLogsFormProps {
 //   auto-select the new skill in this form, so the user keeps their place
 //   (the other fields they already filled in must not be reset).
 
-export function RawLogsForm({ onClose, onCreated, onAchievement }: RawLogsFormProps) {
+export function RawLogsForm({
+  onClose,
+  onCreated,
+  onAchievement,
+  defaultGoalId,
+}: RawLogsFormProps) {
   const [values, setValues] = useState<RawLogFormValues>({
     title: '',
     description: '',
-    goalId: '',
+    goalId: defaultGoalId ?? '',
     skillId: '',
     loggedAt: format(new Date(), 'yyyy-MM-dd'),
     isAchievement: false,
@@ -91,7 +97,7 @@ export function RawLogsForm({ onClose, onCreated, onAchievement }: RawLogsFormPr
       onCreated()
       onClose()
       if (log.isAchievement) {
-        const { data: freshGoals } = await GoalsApi.list()
+        const { data: freshGoals } = await GoalsApi.list() // Check if goal is deleted?
         const goal = freshGoals.find((g) => g.id === log.goalId)
         if (goal) onAchievement?.({ log, goal })
       }
@@ -122,6 +128,7 @@ export function RawLogsForm({ onClose, onCreated, onAchievement }: RawLogsFormPr
         onChange={(e) => setValues({ ...values, goalId: e.target.value })}
         error={Boolean(errors.goalId)}
         helperText={errors.goalId}
+        disabled={Boolean(defaultGoalId)}
       >
         {goals.map((goal) => (
           <MenuItem key={goal.id} value={goal.id}>
@@ -211,13 +218,18 @@ export function RawLogsForm({ onClose, onCreated, onAchievement }: RawLogsFormPr
   )
 }
 
-export function RawLogsCreate({ open, onClose, onCreated }: RawLogsCreateProps) {
+export function RawLogsCreate({ open, onClose, onCreated, defaultGoalId }: RawLogsCreateProps) {
   const router = useRouter()
   const [achievement, setAchievement] = useState<IachievementInfo | null>(null)
   return (
     <>
       <Modal open={open} onClose={onClose} title="Add log">
-        <RawLogsForm onClose={onClose} onCreated={onCreated} onAchievement={setAchievement} />
+        <RawLogsForm
+          onClose={onClose}
+          onCreated={onCreated}
+          onAchievement={setAchievement}
+          defaultGoalId={defaultGoalId}
+        />
       </Modal>
 
       {achievement && (
