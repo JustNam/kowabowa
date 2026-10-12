@@ -79,7 +79,7 @@ function SkillActions(props: ISkillActionsProps) {
         </Tooltip>
 
         {/* 👉 TỰ VIẾT: tooltip cho nút Delete.*/}
-        <Tooltip title="System skills can't be delete">
+        <Tooltip title="System skills can't be deleted">
           <span>
             <IconButton size="small" disabled aria-label="Delete">
               <DeleteOutlineIcon fontSize="small" />
