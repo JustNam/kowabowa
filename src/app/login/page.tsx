@@ -7,6 +7,7 @@ import { useAuth } from '@/components/AuthProvider'
 import { Input } from '@/atoms/input'
 import { Button } from '@/atoms/button'
 import { ROUTES } from '@/constants/routes'
+import { ProfilesApi } from '@/api/profiles'
 
 type Mode = 'signin' | 'signup'
 
@@ -16,13 +17,24 @@ export default function LoginPage() {
   const [mode, setMode] = useState<Mode>('signin')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
+  const [profileError, setProfileError] = useState('')
 
   const handleSubmit = async (event: FormEvent) => {
     event.preventDefault()
+    setProfileError('') // Xóa lỗi cũ mỗi khi user bấm Sign in
     try {
       if (mode === 'signin') {
         await signIn(email, password)
-        router.push(ROUTES.POST_LOGIN_REDIRECT)
+        try {
+          const { data } = await ProfilesApi.me()
+          if (data.obdCompleted) {
+            router.push(ROUTES.POST_LOGIN_REDIRECT)
+          } else {
+            router.push(ROUTES.ONBOARDING)
+          } // <- đóng else
+        } catch { // <- đóng try rồi mới catch
+          setProfileError('Signed in, but we could not load your profile. Please try again.') // Ghi lỗi mới khi tải profile thất bại
+        }
       } else {
         await signUp(email, password)
         router.push(ROUTES.ONBOARDING)
@@ -69,6 +81,8 @@ export default function LoginPage() {
           )}
 
           {error && <p className="text-sm text-red-600">{error}</p>}
+          {profileError && <p className="text-sm text-red-600">{profileError}</p>}
+
 
           <Button type="submit" disabled={loading}>
             {mode === 'signin' ? 'Sign in' : 'Sign up'}

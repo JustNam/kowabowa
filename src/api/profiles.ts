@@ -8,4 +8,10 @@ export class ProfilesApi {
     const response = await backendApi.get<{ data: IProfileDatabaseModel }>('/profiles')
     return { data: profileAdapter.toFrontend(response.data.data) }
   }
+
+  // Đánh dấu completed onboarding
+  static async completeOnboarding(): Promise<{data: IProfileModel}> {
+    const response = await backendApi.patch<{ data: IProfileDatabaseModel}>('/profiles')
+    return {data: profileAdapter.toFrontend(response.data.data)}
+  }
 }
