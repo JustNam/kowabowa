@@ -13,8 +13,12 @@ export const ROUTES = {
 
   DASHBOARD: '/dashboard',
 
+
   // Shown once, right after signup — see src/app/onboarding/page.tsx.
   ONBOARDING: '/onboarding',
+
+  // Profile page - see src/app/profile/page.tsx
+  PROFILE: '/profile',
 
   GOALS: {
     LIST: '/goals/list',
