@@ -138,7 +138,8 @@ function SkillItem(props: ISkillItemProps) {
               Dùng mẫu "A && B" như đã học, với B là
               <Typography variant="body2" color="text.secondary"> chứa mô tả.
               color="text.secondary" lấy màu chữ phụ từ theme, không viết mã màu. */}
-      {props.skill.description !== null && (
+      {/* ?.trim(): null, '' hoặc toàn khoảng trắng đều thành rỗng/undefined -> không hiện */}
+      {props.skill.description?.trim() && (
         <Typography variant="body2" color="text.secondary">
           {props.skill.description}
         </Typography>
