@@ -15,8 +15,8 @@ const toDateString = (d: Date | null) => (d && isValid(d) ? format(d, 'yyyy-MM-d
 
 export function OnboardingForm() {
 
-    // ---- SET STATE ---
     const router = useRouter()
+    // ---- SET STATE ---
     const [title,setTitle] = useState('')
     const [description, setDescription] = useState('')
     const [titleError, setTitleError] = useState('')
