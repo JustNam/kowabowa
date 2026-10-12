@@ -10,7 +10,9 @@ export class CompetencyAdapter
       userId: dbData.user_id,
       title: dbData.title,
       createdAt: dbData.created_at,
-      isSystem: dbData.is_system // bổ sung thêm vì chưa thấy
+      isSystem: dbData.is_system, // bổ sung thêm vì chưa thấy
+      // ?? null: backend may omit the field entirely (undefined) — normalize to null
+      description: dbData.description ?? null
     }
   }
 
@@ -20,7 +22,8 @@ export class CompetencyAdapter
       user_id: frontendData.userId,
       title: frontendData.title,
       created_at: frontendData.createdAt,
-      is_system: frontendData.isSystem // bổ sung thêm vì chưa thấy
+      is_system: frontendData.isSystem, // bổ sung thêm vì chưa thấy
+      description: frontendData.description
     }
   }
 
