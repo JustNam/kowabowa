@@ -17,14 +17,6 @@ interface GoalsCreateProps {
   onCreated: () => void;
 }
 
-// TODO: build the Create Goal form, rendered inside the Modal below.
-// - Fields: title, description (optional), startDate, endDate. Validate
-//   with `validateGoalForm` from '../../schema' (already requires
-//   title, startDate, endDate, and end >= start).
-// - On submit, call `GoalsApi.create(values)` from '@/api/goals', then
-//   `onCreated()` and `onClose()`.
-// - Reuse the Input/Textarea/Button atoms.
-
 type FormErrors = Partial<Record<keyof IGoalCreateRequest, string>>;
 
 const EMPTY: IGoalCreateRequest = {
