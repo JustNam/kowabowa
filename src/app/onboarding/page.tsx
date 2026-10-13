@@ -12,7 +12,7 @@ import { OnboardingForm } from '@/modules/onboarding/components/form'
 //   validation from scratch.
 // - Keep the submit button disabled until title/startDate/endDate are
 //   filled in.
-// - On success, redirect to ROUTES.DASHBOARD ('@/constants/routes').
+// - On success, redirect to ROUTES.GOALS.LIST ('@/constants/routes').
 export default function OnboardingPage() {
   return (
       <OnboardingForm />
