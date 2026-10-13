@@ -1,24 +1,26 @@
-// Backed by the `skills` table. Rows with is_system = true are shared by every
-// user and have no owner, so user_id is null for them.
 export interface ICompetencyDatabaseModel {
   id: string
-  user_id: string | null
+  user_id: string
   title: string
-  description: string | null
-  is_system: boolean | null
+  // name: string
   created_at: string
+  is_system: boolean
+  description: string | null
 }
 
 export interface ICompetencyModel {
   id: string
-  userId: string | null
+  userId: string
+  // name: string
   title: string
-  description: string | null
-  isSystem: boolean
   createdAt: string
+  isSystem: boolean
+  description: string | null
 }
 
 export interface ICompetencyCreateRequest {
+  // name: string
   title: string
+  // khong bat buoc gui
   description?: string
 }
