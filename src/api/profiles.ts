@@ -14,4 +14,18 @@ export class ProfilesApi {
     const response = await backendApi.patch<{ data: IProfileDatabaseModel}>('/profiles')
     return {data: profileAdapter.toFrontend(response.data.data)}
   }
+
+  // Sửa họ tên, ngày sinh. dateOfBirth dạng YYYY-MM-DD
+  static async updateProfile(values: {
+    firstName: string
+    lastName: string
+    dateOfBirth: string
+  }): Promise<{data: IProfileModel}> {
+    const response = await backendApi.put<{data: IProfileDatabaseModel}>('/profiles', {
+      first_name: values.firstName,
+      last_name: values.lastName,
+      date_of_birth: values.dateOfBirth,
+    })
+    return {data: profileAdapter.toFrontend(response.data.data)}
+  }
 }
