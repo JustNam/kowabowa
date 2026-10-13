@@ -36,6 +36,8 @@ import { CompetenciesApi } from '@/api/competencies'
 import { Button } from '@/atoms/button'
 import type { ICompetencyModel } from '@/interfaces/competency.model'
 import { CompetenciesCreate } from '../create'
+import { CompetenciesEdit } from '../edit'
+import { CompetenciesDelete } from '../delete'
 
 // đổi format từ timestamp sang định dạng như trong wireframe
 function formatDate(value: string): string {
@@ -222,6 +224,8 @@ export function CompetenciesList() {
   const [createOpen, setCreateOpen] = useState(false)
   const [reloadKey, setReloadKey] = useState(0)
   const [search, setSearch] = useState ('')
+  const [editingSkill, setEditingSkill] = useState<ICompetencyModel | null>(null)
+  const [deletingSkill, setDeletingSkill] = useState<ICompetencyModel | null>(null)
   // 👉 TỰ VIẾT: state search, setSearch: chữ gõ vào ô tìm kiếm, ban đầu là ''
 
   // ----- Tải danh sách (giữ nguyên từ file mẫu, đã giải thích trước) -----
@@ -251,12 +255,12 @@ export function CompetenciesList() {
   // Tạm thời chỉ in ra tab Console của trình duyệt (F12) để thử nút bấm.
   function handleEdit(skill: ICompetencyModel) {
     // TODO: mở modal sửa skill. Sửa xong gọi setReloadKey((k) => k + 1)
-    console.log('Edit', skill.id)
+    setEditingSkill(skill)
   }
   function handleDelete(skill: ICompetencyModel) {
     // TODO: mở modal xác nhận xoá (src/atoms/modal).
     // BE trả lỗi 409 "Skill is used in logs" nếu skill đang được dùng trong log.
-    console.log('Delete', skill.id)
+    setDeletingSkill(skill)
   }
 
   // ----- Tính dữ liệu để hiển thị -----
@@ -354,6 +358,22 @@ export function CompetenciesList() {
         onClose={() => setCreateOpen(false)}
         onCreated={() => setReloadKey((k) => k + 1)}
       />
+        {editingSkill && (
+          <CompetenciesEdit
+            key={editingSkill.id}
+            skill={editingSkill}
+            onClose={() => setEditingSkill(null)}        // 📖 về null = đóng popup
+            onSaved={() => setReloadKey((k) => k + 1)}   // 📖 tải lại list, giống Create
+          />
+        )}
+        {deletingSkill && (
+          <CompetenciesDelete
+            key={deletingSkill.id}
+            skill={deletingSkill}
+            onClose={() => setDeletingSkill(null)}        // 📖 về null = đóng popup
+            onDeleted={() => setReloadKey((k) => k + 1)}   // 📖 tải lại list, giống Create
+          />
+        )}
     </div>
   )
 }
