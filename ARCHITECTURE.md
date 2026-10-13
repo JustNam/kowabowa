@@ -16,7 +16,7 @@ sync** with this one (e.g. its `goals` migration still has a single
 `target_date` column; this repo's `IGoalModel` has `startDate`/`endDate`).
 Treat it as a reference for the Edge Function shape, not a live contract.
 
-Every feature's UI — Goals, Competencies/Skills, Raw logs, Dashboard,
+Every feature's UI — Goals, Competencies/Skills, Raw logs,
 Login, Forgot password, and Onboarding — has been stripped down to
 scaffolding + guidance comments for practice (see each file's `TODO`
 comment block). What's real and worth studying instead of a single
@@ -249,8 +249,9 @@ router.push(ROUTES.GOALS.DETAIL(goalId))
 
 `src/middleware.ts` handles the auth-based redirects (unauthenticated →
 `/login`, authenticated hitting `/login` → `ROUTES.POST_LOGIN_REDIRECT`,
-currently `/dashboard`). New users land on `/onboarding` right after
-signup instead (see `src/app/onboarding/page.tsx`).
+currently `/goals/list` — there is no dashboard page). New users land on
+`/onboarding` right after signup instead, and so does anyone who signs in
+before finishing onboarding (see `src/app/login/page.tsx`).
 
 ---
 
@@ -286,7 +287,7 @@ signup instead (see `src/app/onboarding/page.tsx`).
 
 Don't build ahead of these — they're left as-is on purpose:
 
-- Goals, Competencies/Skills, Raw logs, Dashboard, Login, Forgot
+- Goals, Competencies/Skills, Raw logs, Login, Forgot
   password, and Onboarding — stripped down to scaffolding + guidance
   comments for practice. Each stub's own `TODO` comment block names the
   data layer (interface/adapter/API service) to wire up.
