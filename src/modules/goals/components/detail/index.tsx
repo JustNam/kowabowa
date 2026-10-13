@@ -6,11 +6,9 @@ import { GoalsApi } from "@/api/goals";
 import { ROUTES } from "@/constants/routes";
 import type { IGoalModel } from "@/interfaces/goal.model";
 import { GOAL_STATUS_COLOR, GOAL_STATUS_LABEL } from "../../constants";
-import { format, parseISO } from "date-fns";
 import { Chip } from "@mui/material";
 import { RawLogsList } from "@/modules/raw-logs/components/list";
-
-const formatDate = (s: string) => format(parseISO(s), "dd MMM yyyy");
+import { formatDate } from "../../utils";
 
 interface GoalsDetailProps {
   id: string;

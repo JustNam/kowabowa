@@ -8,16 +8,24 @@
  */
 export interface IProfileDatabaseModel {
   id: string
-  full_name: string | null
-  avatar_url: string | null
   created_at: string
-  updated_at: string
+  display_name: string | null
+  email: string
+  username: string | null
+  obd_completed: boolean | null
+  first_name: string | null
+  last_name: string | null
+  date_of_birth: string | null
 }
 
 export interface IProfileModel {
   id: string
-  fullName: string | null
-  avatarUrl: string | null
   createdAt: string
-  updatedAt: string
+  displayName: string | null
+  email: string
+  username: string | null
+  obdCompleted: boolean
+  firstName: string | null
+  lastName: string | null
+  dateOfBirth: string | null
 }
