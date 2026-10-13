@@ -2,9 +2,10 @@
 import { useEffect, useState } from 'react'
 // import {parseISO} from 'date-fns'
 import { ProfilesApi } from '@/api/profiles'
+import { GoalsApi } from '@/api/goals'
 import { Button } from '@/atoms/button'
 import { format, parseISO } from 'date-fns'
-import { Modal } from '@/atoms/modal'
+import { ProfileEdit } from '../edit/' // <- thư mục nằm cạnh nhau import rút gọn ntn 
 
 export function ProfileDetail() {
 
@@ -13,13 +14,14 @@ export function ProfileDetail() {
   const [lastName, setLastName] = useState('')
   const [email, setEmail] = useState('')
   const [dateOfBirth, setDateOfBirth] = useState<Date | null>(null)
-  const [firstNameError, setFirstNameError] = useState('')
-  const [lastNameError, setLastNameError] = useState('')
-  const [dateOfBirthError, setDateOfBirthError] = useState('')
   const [loading, setLoading] = useState(true) // Giá trị đầu = true -> form phải chờ dữ liệu ngay từ lần render đầu
-  const [submitting, setSubmitting] = useState(false)
+  // const [submitting, setSubmitting] = useState(false)
   const [serverError, setServerError] = useState('')
   const [editOpen, setEditOpen] = useState(false)
+  // --- Statistics
+  const [goalsCount, setGoalsCount] = useState(0)
+  const [logsCount, setLogsCount] = useState(0)
+  const [skillsUsed, setSkillsUsed] = useState(0)
 
   useEffect(() => {
     const load = async () => {
@@ -30,6 +32,11 @@ export function ProfileDetail() {
         setLastName(data.lastName ?? '')
         setEmail(data.email)
         setDateOfBirth(data.dateOfBirth ? parseISO(data.dateOfBirth) : null)
+        const { data: goals } = await GoalsApi.list()
+        setGoalsCount(goals.length)
+        setLogsCount(goals.reduce((sum, goal) => sum + goal.logsCount, 0))
+        // reduce -> cộng dồn logsCount của từng goal, bắt đầu từ O
+
       } catch (err) {
         //set serverError
         setServerError((err as Error).message)
@@ -95,11 +102,11 @@ export function ProfileDetail() {
         <h2 className="text-base font-semibold text-slate-900">Statistics</h2>
         <div className="mt-3 grid grid-cols-3 gap-4">
           <div className="rounded-lg border border-slate-200 p-4">
-            <p className="text-2xl font-semibold text-slate-900">0</p>
+            <p className="text-2xl font-semibold text-slate-900">{goalsCount}</p>
             <p className="text-sm text-slate-900">Goals</p>
           </div>
           <div className="rounded-lg border border-slate-200 p-4">
-            <p className="text-2xl font-semibold text-slate-900">0</p>
+            <p className="text-2xl font-semibold text-slate-900">{logsCount}</p>
             <p className="text-sm text-slate-900">Logs</p>
           </div>
           <div className="rounded-lg border border-slate-200 p-4">
@@ -108,7 +115,20 @@ export function ProfileDetail() {
           </div>
         </div>
       </section>
-    {serverError && <p className ="text-sm text-red-600">{serverError}</p>}
+      {serverError && <p className="text-sm text-red-600">{serverError}</p>}
+
+      {/* Render modal Edit profile */}
+      {editOpen && (<ProfileEdit
+        open={editOpen}
+        onClose={() => setEditOpen(false)}
+        profile={{ firstName, lastName, email, dateOfBirth }}
+        onSaved={(data) => {
+          setFirstName(data.firstName ?? '')
+          setLastName(data.lastName ?? '')
+          setDateOfBirth(data.dateOfBirth ? parseISO(data.dateOfBirth) : null)
+        }}
+      />)}
+
     </div>
   )
 
