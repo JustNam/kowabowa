@@ -1,16 +1,19 @@
-import type { ICompetencyDatabaseModel, ICompetencyModel } from './competency.model'
-
 export interface IRawLogDatabaseModel {
   id: string
   user_id: string
   goal_id: string
-  description: string
+  skill_id: string | null
+  title: string
+  description: string | null
+  is_achievement: boolean
   logged_at: string
   created_at: string
-  // Nested via Supabase's foreign-table select — see
-  // kowabowa-backend/supabase/functions/raw-logs/index.ts#SELECT_WITH_RELATIONS.
-  goals: { id: string; title: string } | null
-  raw_log_competencies: { competency_id: string; competencies: ICompetencyDatabaseModel | null }[]
+  deleted_at: string | null
+  // Nested via PostgREST's foreign-table select, through the goal_id / skill_id
+  // foreign keys: `select=*,goals(id,title),skills(id,title)`.
+  // Not returned by the `logs` function today (it selects `*` only), hence optional.
+  goals?: { id: string; title: string }
+  skills?: { id: string; title: string } | null
 }
 
 export interface IRawLogModel {
@@ -18,22 +21,30 @@ export interface IRawLogModel {
   userId: string
   goalId: string
   goalTitle: string | null
-  description: string
+  skillId: string | null
+  skillTitle: string | null
+  title: string
+  description: string | null
+  isAchievement: boolean
   loggedAt: string
   createdAt: string
-  competencies: ICompetencyModel[]
+  deletedAt: string | null
 }
 
 export interface IRawLogCreateRequest {
+  title: string
   goalId: string
-  description: string
-  loggedAt?: string
-  competencyIds: string[]
+  loggedAt: string
+  description?: string
+  skillId?: string
+  isAchievement?: boolean
 }
 
 export interface IRawLogCreateDatabaseRequest {
+  title: string
   goal_id: string
-  description: string
-  logged_at?: string
-  competency_ids: string[]
+  logged_at: string
+  description?: string
+  skill_id?: string
+  is_achievement?: boolean
 }
