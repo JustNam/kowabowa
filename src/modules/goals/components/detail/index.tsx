@@ -14,7 +14,6 @@ import { GoalsCreate } from "../create";
 import { useRouter } from "next/navigation";
 import { Menu, MenuItem } from "@mui/material";
 import { Modal } from "@/atoms/modal";
-import { set } from "date-fns";
 
 interface GoalsDetailProps {
   id: string;
