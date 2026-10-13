@@ -5,6 +5,7 @@ export interface ICompetencyDatabaseModel {
   // name: string
   created_at: string
   is_system: boolean
+  description: string | null
 }
 
 export interface ICompetencyModel {
@@ -14,6 +15,7 @@ export interface ICompetencyModel {
   title: string
   createdAt: string
   isSystem: boolean
+  description: string | null
 }
 
 export interface ICompetencyCreateRequest {
