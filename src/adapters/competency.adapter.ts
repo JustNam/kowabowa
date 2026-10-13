@@ -9,7 +9,8 @@ export class CompetencyAdapter
       id: dbData.id,
       userId: dbData.user_id,
       title: dbData.title,
-      description: dbData.description,
+      // ?? null: backend may omit the field entirely (undefined) — normalize to null
+      description: dbData.description ?? null,
       isSystem: dbData.is_system ?? false,
       createdAt: dbData.created_at,
     }
