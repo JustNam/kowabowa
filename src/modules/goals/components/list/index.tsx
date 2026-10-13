@@ -89,7 +89,7 @@ export function GoalsList() {
       <GoalsCreate
         open={createOpen}
         onClose={() => setCreateOpen(false)}
-        onCreated={() => setReloadKey((k) => k + 1)}
+        onSaved={() => setReloadKey((k) => k + 1)}
       />
     </div>
   );
