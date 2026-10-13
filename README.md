@@ -21,7 +21,6 @@ reference, not a live contract.
 | --------------------- | --------------------------------------------- |
 | Auth (sign in/up/out, forgot password) | 🔲 scaffolded — practice exercise, see `ARCHITECTURE.md` |
 | Profile (`public.profiles`) | ✅ implemented (auto-created on signup, no UI yet) |
-| Dashboard              | 🔲 scaffolded — practice exercise              |
 | Onboarding             | 🔲 scaffolded — practice exercise              |
 | Goals                  | 🔲 scaffolded — practice exercise (data layer — interface/adapter/API — is real, UI is a stub) |
 | Skills (Competencies)  | 🔲 scaffolded — practice exercise (same split as Goals) |
