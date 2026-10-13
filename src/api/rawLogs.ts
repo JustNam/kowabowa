@@ -20,4 +20,10 @@ export class RawLogsApi {
     const response = await backendApi.post<{ data: IRawLogDatabaseModel }>('/logs', dbPayload)
     return { data: rawLogAdapter.toFrontend(response.data.data) }
   }
+  static async setAchievement(id: string, isAchievement: boolean): Promise<{ data: IRawLogModel }> {
+    const response = await backendApi.patch<{ data: IRawLogDatabaseModel }>(`/logs/${id}`, {
+      is_achievement: isAchievement,
+    })
+    return { data: rawLogAdapter.toFrontend(response.data.data) }
+  }
 }

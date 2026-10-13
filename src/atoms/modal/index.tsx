@@ -11,15 +11,22 @@ interface ModalProps {
   onClose: () => void
   title: string
   children: ReactNode
+  hidden?: boolean
 }
 
 /**
  * Atom: pure UI, no business logic. See ARCHITECTURE.md#styling.
  * Thin wrapper over MUI's `Dialog`, themed via `src/lib/mui/theme.ts`.
  */
-export function Modal({ open, onClose, title, children }: ModalProps) {
+export function Modal({ open, onClose, title, children, hidden }: ModalProps) {
   return (
-    <Dialog open={open} onClose={() => onClose()} fullWidth maxWidth="sm">
+    <Dialog
+      open={open}
+      onClose={() => onClose()}
+      fullWidth
+      maxWidth="sm"
+      sx={hidden ? { visibility: 'hidden' } : undefined}
+    >
       <DialogTitle
         sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 2 }}
       >

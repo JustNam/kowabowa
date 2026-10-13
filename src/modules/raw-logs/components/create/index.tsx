@@ -20,6 +20,7 @@ import { CompetenciesApi } from '@/api/competencies'
 import type { IGoalModel } from '@/interfaces/goal.model'
 import type { IRawLogModel } from '@/interfaces/raw-log.model'
 import type { ICompetencyModel } from '@/interfaces/competency.model'
+import { CompetenciesCreate } from '@/modules/competencies/components/create'
 
 export interface IachievementInfo {
   log: IRawLogModel
@@ -39,6 +40,8 @@ interface RawLogsFormProps {
   onCreated: () => void
   onAchievement?: (info: { log: IRawLogModel; goal: IGoalModel }) => void
   defaultGoalId?: string
+  skillModalOpen: boolean
+  onSkillModalChange: (open: boolean) => void
 }
 
 // TODO: build the Log work form, rendered inside the Modal below.
@@ -56,11 +59,15 @@ interface RawLogsFormProps {
 //   auto-select the new skill in this form, so the user keeps their place
 //   (the other fields they already filled in must not be reset).
 
+const ADD_NEW_SKILL = '__add_new_skill__'
+
 export function RawLogsForm({
   onClose,
   onCreated,
   onAchievement,
   defaultGoalId,
+  skillModalOpen,
+  onSkillModalChange,
 }: RawLogsFormProps) {
   const [values, setValues] = useState<RawLogFormValues>({
     title: '',
@@ -161,7 +168,13 @@ export function RawLogsForm({
         label="Skill"
         placeholder="Select a skill"
         value={values.skillId}
-        onChange={(e) => setValues({ ...values, skillId: e.target.value })}
+        onChange={(e) => {
+          if (e.target.value === ADD_NEW_SKILL) {
+            onSkillModalChange(true)
+            return
+          }
+          setValues({ ...values, skillId: e.target.value })
+        }}
         slotProps={{
           select: {
             renderValue: (selected) => {
@@ -184,7 +197,29 @@ export function RawLogsForm({
             {skill.title}
           </MenuItem>
         ))}
+        <MenuItem
+          value={ADD_NEW_SKILL}
+          sx={{
+            position: 'sticky',
+            bottom: 0,
+            gap: 1,
+            fontWeight: 600,
+            bgcolor: 'background.paper',
+            borderTop: '1px solid',
+            borderColor: 'divider',
+          }}
+        >
+          <span aria-hidden>+</span> Add new skill
+        </MenuItem>
       </Select>
+
+      <CompetenciesCreate
+        open={skillModalOpen}
+        onClose={() => onSkillModalChange(false)}
+        onCreated={() => {
+          CompetenciesApi.list().then(({ data }) => setSkills(data))
+        }}
+      />
 
       <Textarea
         label="Description"
@@ -221,14 +256,18 @@ export function RawLogsForm({
 export function RawLogsCreate({ open, onClose, onCreated, defaultGoalId }: RawLogsCreateProps) {
   const router = useRouter()
   const [achievement, setAchievement] = useState<IachievementInfo | null>(null)
+  const [skillModalOpen, setSkillModalOpen] = useState(false)
+
   return (
     <>
-      <Modal open={open} onClose={onClose} title="Add log">
+<Modal open={open} onClose={onClose} title="Add log" hidden={skillModalOpen}>
         <RawLogsForm
           onClose={onClose}
           onCreated={onCreated}
           onAchievement={setAchievement}
           defaultGoalId={defaultGoalId}
+          skillModalOpen={skillModalOpen}
+          onSkillModalChange={setSkillModalOpen}
         />
       </Modal>
 

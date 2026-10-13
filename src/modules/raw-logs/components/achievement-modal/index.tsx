@@ -39,7 +39,7 @@ export function AchievementModal({
         <h2 className="text-2xl font-bold">Congratulations!</h2>
         <p className="text-slate-600">
           You’ve reached a new achievement for your goal{' '}
-          <strong className='text-slate-900'>"{goalTitle}"</strong>.
+          <strong className='text-slate-900'>&quot;{goalTitle}&quot;</strong>.
         </p>
 
         <div className="w-full rounded-lg border border-slate-200 px-4 py-3">
