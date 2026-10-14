@@ -70,7 +70,10 @@ export function GoalsDetail({ id }: GoalsDetailProps) {
 
       <div className="grid grid-cols-1 overflow-hidden rounded-lg border border-gray-200 lg:grid-cols-[1fr_320px]">
         <section className="min-w-0 p-6">
-          <RawLogsList goalId={goal.id} />
+          <RawLogsList
+            goalId={goal.id}
+            onChanged={() => setReloadKey((k) => k + 1)}
+          />
         </section>
 
         <aside className="flex flex-col gap-4 border-t border-gray-200 p-6 lg:border-l lg:border-t-0">
