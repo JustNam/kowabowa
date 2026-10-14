@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { GoalsApi } from "@/api/goals";
 import { ROUTES } from "@/constants/routes";
-import type { IGoalModel } from "@/interfaces/goal.model";
+import type { IGoalModel, ISkillUsed } from "@/interfaces/goal.model";
 import { GOAL_STATUS_COLOR, GOAL_STATUS_LABEL } from "../../constants";
 import { Chip } from "@mui/material";
 import { RawLogsList } from "@/modules/raw-logs/components/list";
@@ -20,6 +20,7 @@ interface GoalsDetailProps {
 
 export function GoalsDetail({ id }: GoalsDetailProps) {
   const [goal, setGoal] = useState<IGoalModel | null>(null);
+  const [skillsUsed, setSkillsUsed] = useState<ISkillUsed[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [editOpen, setEditOpen] = useState(false);
@@ -30,6 +31,7 @@ export function GoalsDetail({ id }: GoalsDetailProps) {
     GoalsApi.detail(id)
       .then(({ data }) => {
         setGoal(data.goal);
+        setSkillsUsed(data.skillsUsed);
         setError(null);
       })
       .catch((err: Error) => setError(err.message))
@@ -106,6 +108,27 @@ export function GoalsDetail({ id }: GoalsDetailProps) {
               {goal.description}
             </p>
           )}
+
+          <section className="flex flex-col gap-2 border-t border-gray-200 pt-4">
+            <h3 className="text-sm font-semibold">Skills used</h3>
+            {skillsUsed.length === 0 ? (
+              <p className="text-sm text-gray-500">
+                No skills yet. Add a log with a skill to see it here.
+              </p>
+            ) : (
+              <ul className="flex flex-wrap gap-2">
+                {skillsUsed.map((skill) => (
+                  <li key={skill.id}>
+                    <Chip
+                      size="small"
+                      variant="outlined"
+                      label={`${skill.title} - ${skill.logsCount}`}
+                    />
+                  </li>
+                ))}
+              </ul>
+            )}
+          </section>
         </aside>
       </div>
 
