@@ -1,4 +1,7 @@
-'use client'
+
+// import { PageLayout } from '@/components/PageLayout'
+import { OnboardingForm } from '@/modules/onboarding/components/form'
+
 
 // TODO: build the Onboarding page — shown once, right after signup.
 // - Same fields/validation as the regular Create Goal modal
@@ -9,7 +12,10 @@
 //   validation from scratch.
 // - Keep the submit button disabled until title/startDate/endDate are
 //   filled in.
-// - On success, redirect to ROUTES.DASHBOARD ('@/constants/routes').
+// - On success, redirect to ROUTES.GOALS.LIST ('@/constants/routes').
 export default function OnboardingPage() {
-  return null
+  return (
+      <OnboardingForm />
+  )
 }
+

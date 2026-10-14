@@ -49,7 +49,8 @@ export function useAuth(): IAuthState & IAuthActions {
     setLoading(true)
     setError(null)
     try {
-      await AuthApi.signUp(email, password)
+      const {data} = await AuthApi.signUp(email, password)
+      setUser(data.user)
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to sign up')
       throw err

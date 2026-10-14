@@ -1,4 +1,3 @@
-import { competencyAdapter } from './competency.adapter'
 import type {
   IRawLogDatabaseModel,
   IRawLogModel,
@@ -13,13 +12,14 @@ export class RawLogAdapter {
       userId: dbData.user_id,
       goalId: dbData.goal_id,
       goalTitle: dbData.goals?.title ?? null,
+      skillId: dbData.skill_id,
+      skillTitle: dbData.skills?.title ?? null,
+      title: dbData.title,
       description: dbData.description,
+      isAchievement: dbData.is_achievement,
       loggedAt: dbData.logged_at,
       createdAt: dbData.created_at,
-      competencies: (dbData.raw_log_competencies ?? [])
-        .map((join) => join.competencies)
-        .filter((c): c is NonNullable<typeof c> => c !== null)
-        .map((c) => competencyAdapter.toFrontend(c)),
+      deletedAt: dbData.deleted_at,
     }
   }
 
@@ -29,14 +29,14 @@ export class RawLogAdapter {
 
   createRequestToDatabase(frontendData: IRawLogCreateRequest): IRawLogCreateDatabaseRequest {
     const dbData: IRawLogCreateDatabaseRequest = {
+      title: frontendData.title,
       goal_id: frontendData.goalId,
-      description: frontendData.description,
-      competency_ids: frontendData.competencyIds,
+      logged_at: frontendData.loggedAt,
     }
 
-    if (frontendData.loggedAt) {
-      dbData.logged_at = frontendData.loggedAt
-    }
+    if (frontendData.description) dbData.description = frontendData.description
+    if (frontendData.skillId) dbData.skill_id = frontendData.skillId
+    if (frontendData.isAchievement !== undefined) dbData.is_achievement = frontendData.isAchievement
 
     return dbData
   }

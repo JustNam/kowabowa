@@ -1,7 +1,7 @@
-export function validateName(name: string): string | null {
-  const trimmed = name.trim()
+export function validateTitle(title: string): string | null {
+  const trimmed = title.trim()
 
-  if (!trimmed) return 'Name is required'
+  if (!trimmed) return 'Title is required'
   if (trimmed.length > 60) return 'Keep it under 60 characters'
 
   return null

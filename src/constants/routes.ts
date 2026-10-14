@@ -7,14 +7,16 @@ export const ROUTES = {
   LOGIN: '/login',
   FORGOT_PASSWORD: '/forgot-password',
 
-  // Where an authenticated user lands after sign-in, and where an
-  // unauthenticated user is bounced from a protected route.
-  POST_LOGIN_REDIRECT: '/dashboard',
-
-  DASHBOARD: '/dashboard',
+  // Where an authenticated user who has finished onboarding lands after
+  // sign-in (Goals list — there is no dashboard page). Users who haven't
+  // finished onboarding go to ONBOARDING instead — see src/app/login/page.tsx.
+  POST_LOGIN_REDIRECT: '/goals/list',
 
   // Shown once, right after signup — see src/app/onboarding/page.tsx.
   ONBOARDING: '/onboarding',
+
+  // Profile page - see src/app/profile/page.tsx
+  PROFILE: '/profile',
 
   GOALS: {
     LIST: '/goals/list',
