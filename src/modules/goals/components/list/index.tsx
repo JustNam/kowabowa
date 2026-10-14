@@ -13,6 +13,7 @@ import { Chip, Tab, Tabs } from "@mui/material";
 import { EGoalStatus, type IGoalModel } from "@/interfaces/goal.model";
 import { PageLayout } from "@/components/PageLayout";
 import AddIcon from "@mui/icons-material/Add";
+import { RawLogsCreate } from "@/modules/raw-logs/components/create";
 
 const plural = (n: number, word: string) => `${n} ${word}${n === 1 ? "" : "s"}`;
 type StatusTab = "all" | EGoalStatus;
@@ -33,6 +34,7 @@ export function GoalsList() {
   const [reloadKey, setReloadKey] = useState(0);
   const [search, setSearch] = useState("");
   const [tab, setTab] = useState<StatusTab>("all");
+  const [logGoalId, setLogGoalId] = useState<string | null>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -127,31 +129,44 @@ export function GoalsList() {
         {visibleGoals.length > 0 && (
           <ul className="flex flex-col gap-2">
             {visibleGoals.map((goal) => (
-              <li key={goal.id}>
-                <Link
-                  href={ROUTES.GOALS.DETAIL(goal.id)}
-                  className="flex flex-col gap-2 rounded border border-gray-200 p-4 hover:bg-gray-50"
-                >
+              <li
+                key={goal.id}
+                className="flex items-center justify-between gap-4 rounded border border-gray-200 p-4 hover:bg-gray-50"
+              >
+                <div className="flex min-w-0 flex-col gap-2">
                   <Chip
                     size="small"
                     className="self-start"
                     label={GOAL_STATUS_LABEL[goal.status]}
                     color={GOAL_STATUS_COLOR[goal.status]}
                   />
-
-                  <span className="break-words font-semibold">
+                  <Link
+                    href={ROUTES.GOALS.DETAIL(goal.id)}
+                    className="break-words font-semibold hover:underline"
+                  >
                     {goal.title}
-                  </span>
+                  </Link>
                   <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-gray-500">
                     <span>
                       {formatDate(goal.startDate)} - {formatDate(goal.endDate)}
                     </span>
                     <span aria-hidden="true">|</span>
-                    <span>{plural(goal.logsCount, "log")} </span>
-                    <span aria-hidden="true">| </span>
+                    <span>{plural(goal.logsCount, "log")}</span>
+                    <span aria-hidden="true">|</span>
                     <span>{plural(goal.achievementsCount, "achievement")}</span>
                   </div>
-                </Link>
+                </div>
+
+                <div className="flex shrink-0 items-center gap-1">
+                  <Button
+                    variant="secondary"
+                    size="small"
+                    startIcon={<AddIcon />}
+                    onClick={() => setLogGoalId(goal.id)}
+                  >
+                    Add log
+                  </Button>
+                </div>
               </li>
             ))}
           </ul>
@@ -162,6 +177,15 @@ export function GoalsList() {
           onClose={() => setCreateOpen(false)}
           onSaved={() => setReloadKey((k) => k + 1)}
         />
+
+        {logGoalId && (
+          <RawLogsCreate
+            open
+            defaultGoalId={logGoalId}
+            onClose={() => setLogGoalId(null)}
+            onCreated={() => setReloadKey((k) => k + 1)}
+          />
+        )}
       </div>
     </PageLayout>
   );
