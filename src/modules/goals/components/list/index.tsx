@@ -11,6 +11,8 @@ import { formatDate } from "../../utils";
 import { Input } from "@/atoms/input";
 import { Chip, Tab, Tabs } from "@mui/material";
 import { EGoalStatus, type IGoalModel } from "@/interfaces/goal.model";
+import { PageLayout } from "@/components/PageLayout";
+import AddIcon from "@mui/icons-material/Add";
 
 const plural = (n: number, word: string) => `${n} ${word}${n === 1 ? "" : "s"}`;
 type StatusTab = "all" | EGoalStatus;
@@ -75,83 +77,92 @@ export function GoalsList() {
   };
 
   return (
-    <div className="flex flex-col gap-4">
-      <div>
-        <Button onClick={() => setCreateOpen(true)}>Create Goal</Button>
-      </div>
-      <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-        <div className="w-full md:w-72">
-          <Input
-            placeholder="Search goals"
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-          />
-        </div>
-        <Tabs
-          value={tab}
-          onChange={(_, value) => setTab(value)}
-          variant="scrollable"
-        >
-          {TABS.map((t) => (
-            <Tab
-              key={t}
-              value={t}
-              label={`${t === "all" ? "All" : GOAL_STATUS_LABEL[t]} (${countFor(t)})`}
+    <PageLayout
+      title="Goals"
+      subtitle="Everything you're working toward right now"
+      actions={
+        <Button startIcon={<AddIcon />} onClick={() => setCreateOpen(true)}>
+          Create Goal
+        </Button>
+      }
+    >
+      <div className="flex flex-col gap-4">
+        <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+          <div className="w-full md:w-72">
+            <Input
+              placeholder="Search goals"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
             />
-          ))}
-        </Tabs>
-      </div>
-      {isEmpty && (
-        <p className="text-sm text-gray-500">
-          No goals yet. Create your first one.
-        </p>
-      )}
-
-      {noMatch && (
-        <div className="flex flex-col items-start gap-2">
-          <p className="text-sm text-gray-500">No goals march your filters</p>
-          <Button variant="text" onClick={clearFilters}>
-            Clear filters
-          </Button>
+          </div>
+          <Tabs
+            value={tab}
+            onChange={(_, value) => setTab(value)}
+            variant="scrollable"
+          >
+            {TABS.map((t) => (
+              <Tab
+                key={t}
+                value={t}
+                label={`${t === "all" ? "All" : GOAL_STATUS_LABEL[t]} (${countFor(t)})`}
+              />
+            ))}
+          </Tabs>
         </div>
-      )}
+        {isEmpty && (
+          <p className="text-sm text-gray-500">
+            No goals yet. Create your first one.
+          </p>
+        )}
 
-      {visibleGoals.length > 0 && (
-        <ul className="flex flex-col gap-2">
-          {visibleGoals.map((goal) => (
-            <li key={goal.id}>
-              <Link
-                href={ROUTES.GOALS.DETAIL(goal.id)}
-                className="flex flex-col gap-2 rounded border border-gray-200 p-4 hover:bg-gray-50"
-              >
-                <Chip
-                  size="small"
-                  className="self-start"
-                  label={GOAL_STATUS_LABEL[goal.status]}
-                  color={GOAL_STATUS_COLOR[goal.status]}
-                />
+        {noMatch && (
+          <div className="flex flex-col items-start gap-2">
+            <p className="text-sm text-gray-500">No goals match your filters</p>
+            <Button variant="text" onClick={clearFilters}>
+              Clear filters
+            </Button>
+          </div>
+        )}
 
-                <span className="break-words font-semibold">{goal.title}</span>
-                <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-gray-500">
-                  <span>
-                    {formatDate(goal.startDate)} - {formatDate(goal.endDate)}
+        {visibleGoals.length > 0 && (
+          <ul className="flex flex-col gap-2">
+            {visibleGoals.map((goal) => (
+              <li key={goal.id}>
+                <Link
+                  href={ROUTES.GOALS.DETAIL(goal.id)}
+                  className="flex flex-col gap-2 rounded border border-gray-200 p-4 hover:bg-gray-50"
+                >
+                  <Chip
+                    size="small"
+                    className="self-start"
+                    label={GOAL_STATUS_LABEL[goal.status]}
+                    color={GOAL_STATUS_COLOR[goal.status]}
+                  />
+
+                  <span className="break-words font-semibold">
+                    {goal.title}
                   </span>
-                  <span aria-hidden="true">|</span>
-                  <span>{plural(goal.logsCount, "log")} </span>
-                  <span aria-hidden="true">| </span>
-                  <span>{plural(goal.achievementsCount, "achievement")}</span>
-                </div>
-              </Link>
-            </li>
-          ))}
-        </ul>
-      )}
+                  <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-gray-500">
+                    <span>
+                      {formatDate(goal.startDate)} - {formatDate(goal.endDate)}
+                    </span>
+                    <span aria-hidden="true">|</span>
+                    <span>{plural(goal.logsCount, "log")} </span>
+                    <span aria-hidden="true">| </span>
+                    <span>{plural(goal.achievementsCount, "achievement")}</span>
+                  </div>
+                </Link>
+              </li>
+            ))}
+          </ul>
+        )}
 
-      <GoalsCreate
-        open={createOpen}
-        onClose={() => setCreateOpen(false)}
-        onSaved={() => setReloadKey((k) => k + 1)}
-      />
-    </div>
+        <GoalsCreate
+          open={createOpen}
+          onClose={() => setCreateOpen(false)}
+          onSaved={() => setReloadKey((k) => k + 1)}
+        />
+      </div>
+    </PageLayout>
   );
 }
