@@ -7,10 +7,12 @@ import {
   EditOutlined,
   KeyboardArrowDown,
   KeyboardArrowRight,
+  WorkspacePremiumOutlined,
 } from '@mui/icons-material'
 import { Button } from '@/atoms/button'
 import { Modal } from '@/atoms/modal'
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
+import { usePathname, useRouter, useSearchParams } from 'next/navigation'
 import type { IRawLogModel } from '@/interfaces/raw-log.model'
 import { RawLogsApi } from '@/api/rawLogs'
 import { format, parseISO, isSameYear } from 'date-fns'
@@ -43,22 +45,43 @@ interface TabButtonProps {
 //   and pass it an `onCreated` callback that refetches the list.
 
 const OPEN_BY_DEFAULT = ['upcoming', 'this-week', 'last-week']
+// How long the "Deleted ... Undo" toast stays, and how long the real DELETE request waits.
+const UNDO_MS = 5000
 
 export function RawLogsList({ goalId, onChanged }: RawLogsListProps = {}) {
-  const [logs, setLogs] = useState<IRawLogModel[]>([])
+  const [allLogs, setLogs] = useState<IRawLogModel[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [editingLog, setEditingLog] = useState<IRawLogModel | null>(null)
   const [deletingLog, setDeletingLog] = useState<IRawLogModel | null>(null)
-  const [tab, setTab] = useState<'logs' | 'achievements'>('logs')
+  const router = useRouter()
+  const pathname = usePathname()
+  const searchParams = useSearchParams()
+  const highlightId = searchParams.get('logId')
+  const tabParam = searchParams.get('tab')
+  const [tab, setTab] = useState<'logs' | 'achievements'>(
+    tabParam === 'achievements' ? 'achievements' : 'logs',
+  )
+  const [prevTabParam, setPrevTabParam] = useState(tabParam)
+  if (tabParam !== prevTabParam) {
+    setPrevTabParam(tabParam)
+    if (tabParam === 'logs' || tabParam === 'achievements') setTab(tabParam)
+  }
   const [createOpen, setCreateOpen] = useState(false)
   const [reloadKey, setReloadKey] = useState(0)
   const [openOverrides, setOpenOverrides] = useState<Record<string, boolean>>({})
   const [toggleId, setToggleId] = useState<string | null>(null)
   const [toggleError, setToggleError] = useState<string | null>(null)
-  const [deleting, setDeleting] = useState(false)
-  const [deleteError, setDeleteError] = useState<string | null>(null)
   const [toastOpen, setToastOpen] = useState(false)
+  const [removedLog, setRemovedLog] = useState<IRawLogModel | null>(null)
+  const [removeToastOpen, setRemoveToastOpen] = useState(false)
+  // Delete with Undo: the log is hidden at once and the real DELETE is sent after UNDO_MS.
+  const [pendingDelete, setPendingDelete] = useState<IRawLogModel | null>(null)
+  const [deletedLog, setDeletedLog] = useState<IRawLogModel | null>(null)
+  const [deleteToastOpen, setDeleteToastOpen] = useState(false)
+  const pendingRef = useRef<{ log: IRawLogModel; timer: ReturnType<typeof setTimeout> } | null>(
+    null,
+  )
 
   useEffect(() => {
     RawLogsApi.list(goalId)
@@ -70,43 +93,118 @@ export function RawLogsList({ goalId, onChanged }: RawLogsListProps = {}) {
       .finally(() => setLoading(false))
   }, [goalId, reloadKey])
 
-  const handleToggleAchievement = async (log: IRawLogModel) => {
+  useEffect(() => {
+    if (!highlightId) return
+    const timer = setTimeout(() => router.replace(pathname, { scroll: false }), 3000)
+    return () => clearTimeout(timer)
+  }, [highlightId, pathname, router])
+
+  useEffect(() => {
+    if (!highlightId || loading) return
+    document
+      .getElementById(`log-${highlightId}`)
+      ?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+  }, [highlightId, allLogs, loading, tab])
+
+  useEffect(
+    () => () => {
+      const pending = pendingRef.current
+      if (!pending) return
+      clearTimeout(pending.timer)
+      RawLogsApi.remove(pending.log.id).catch(() => {})
+    },
+    [],
+  )
+
+  // `silent` skips the toast; the Undo button of the "Removed" toast uses it.
+  const handleToggleAchievement = async (log: IRawLogModel, silent = false) => {
+    const next = !log.isAchievement
+    const apply = (value: boolean) =>
+      setLogs((prev) => prev.map((l) => (l.id === log.id ? { ...l, isAchievement: value } : l)))
+
     setToggleId(log.id)
     setToggleError(null)
+    // Optimistic update: change the screen now, send the request after, undo on error.
+    apply(next)
+    if (!silent) {
+      if (log.isAchievement) {
+        setRemovedLog(log)
+        setToastOpen(false)
+        setRemoveToastOpen(true)
+      } else {
+        setRemoveToastOpen(false)
+        setToastOpen(true)
+      }
+    }
     try {
-      await RawLogsApi.setAchievement(log.id, !log.isAchievement)
-      setReloadKey((k) => k + 1)
+      await RawLogsApi.setAchievement(log.id, next)
       onChanged?.()
-      if (!log.isAchievement) setToastOpen(true)
     } catch (err) {
+      apply(!next)
+      setToastOpen(false)
+      setRemoveToastOpen(false)
       setToggleError(err instanceof Error ? err.message : 'Could not update the log')
     } finally {
       setToggleId(null)
     }
   }
 
-  const closeDelete = () => {
-    if (deleting) return
-    setDeletingLog(null)
-    setDeleteError(null)
+  const handleUndoRemove = () => {
+    if (!removedLog) return
+    setRemoveToastOpen(false)
+    // `removedLog` still has isAchievement = true (the value before the removal),
+    // so pass a copy with false to make the toggle set it back to true.
+    void handleToggleAchievement({ ...removedLog, isAchievement: false }, true)
   }
 
-  const handleDelete = async () => {
-    if (!deletingLog) return
-    setDeleting(true)
-    setDeleteError(null)
+  const closeDelete = () => setDeletingLog(null)
+
+  const commitDelete = async (log: IRawLogModel) => {
     try {
-      await RawLogsApi.remove(deletingLog.id)
-      setDeletingLog(null)
-      setReloadKey((k) => k + 1)
+      await RawLogsApi.remove(log.id)
+      setLogs((prev) => prev.filter((l) => l.id !== log.id))
       onChanged?.()
     } catch (err) {
-      setDeleteError(err instanceof Error ? err.message : 'Could not delete the log')
+      setToggleError(err instanceof Error ? err.message : 'Could not delete the log')
     } finally {
-      setDeleting(false)
+      // Keep a newer pending delete untouched; only clear this log's own hidden state.
+      setPendingDelete((cur) => (cur?.id === log.id ? null : cur))
     }
   }
 
+  const flushPendingDelete = () => {
+    const pending = pendingRef.current
+    if (!pending) return
+    clearTimeout(pending.timer)
+    pendingRef.current = null
+    void commitDelete(pending.log)
+  }
+
+  const handleDelete = () => {
+    if (!deletingLog) return
+    const log = deletingLog
+    flushPendingDelete()
+    const timer = setTimeout(() => {
+      pendingRef.current = null
+      void commitDelete(log)
+    }, UNDO_MS)
+    pendingRef.current = { log, timer }
+    setPendingDelete(log)
+    setDeletedLog(log)
+    setDeleteToastOpen(true)
+    setDeletingLog(null)
+  }
+
+  const handleUndoDelete = () => {
+    const pending = pendingRef.current
+    if (!pending) return
+    clearTimeout(pending.timer)
+    pendingRef.current = null
+    setPendingDelete(null)
+    setDeleteToastOpen(false)
+  }
+
+  const logs = allLogs.filter((log) => log.id !== pendingDelete?.id)
   const achievements = logs.filter((log) => log.isAchievement)
   const groups = groupLogsByPeriod(logs)
 
@@ -159,7 +257,7 @@ export function RawLogsList({ goalId, onChanged }: RawLogsListProps = {}) {
         ) : (
           <div className="flex flex-col">
             {groups.map((group) => {
-              const open = isOpen(group.key)
+              const open = isOpen(group.key) || group.logs.some((l) => l.id === highlightId)
               const achievementCount = group.logs.filter((log) => log.isAchievement).length
               return (
                 <section key={group.key} className="border-t border-gray-200 py-3 first:border-t-0">
@@ -195,6 +293,7 @@ export function RawLogsList({ goalId, onChanged }: RawLogsListProps = {}) {
                           dateLabel={formatLogDate(log.loggedAt, group.key)}
                           onToggleAchievement={handleToggleAchievement}
                           toggling={toggleId === log.id}
+                          highlighted={log.id === highlightId}
                           isFirst={index === 0}
                           isLast={index === group.logs.length - 1}
                           onEdit={setEditingLog}
@@ -256,17 +355,12 @@ export function RawLogsList({ goalId, onChanged }: RawLogsListProps = {}) {
               <strong>“{deletingLog.title}”</strong> will be permanently deleted. If it&apos;s
               marked as an achievement, it will also be removed from Achievements.
             </p>
-            {deleteError && (
-              <p role="alert" className="text-sm text-red-600">
-                {deleteError}
-              </p>
-            )}
             <div className="flex justify-end gap-2">
-              <Button variant="ghost" onClick={closeDelete} disabled={deleting}>
+              <Button variant="ghost" onClick={closeDelete}>
                 Cancel
               </Button>
-              <Button variant="destructive" onClick={handleDelete} disabled={deleting}>
-                {deleting ? 'Deleting...' : 'Delete log'}
+              <Button variant="destructive" onClick={handleDelete}>
+                Delete log
               </Button>
             </div>
           </div>
@@ -294,6 +388,52 @@ export function RawLogsList({ goalId, onChanged }: RawLogsListProps = {}) {
             className="cursor-pointer font-semibold underline"
           >
             View
+          </button>
+        </div>
+      </Snackbar>
+
+      <Snackbar
+        key={`removed-${removedLog?.id}`}
+        open={removeToastOpen}
+        autoHideDuration={5000}
+        onClose={(_, reason) => {
+          if (reason === 'clickaway') return
+          setRemoveToastOpen(false)
+        }}
+        anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
+      >
+        <div className="mb-6 flex items-center gap-3 rounded-lg bg-gray-800 px-4 py-3 text-sm font-medium text-white shadow-lg">
+          <Check sx={{ fontSize: 18 }} />
+          Removed from achievements
+          <button
+            type="button"
+            onClick={handleUndoRemove}
+            className="cursor-pointer font-semibold underline"
+          >
+            Undo
+          </button>
+        </div>
+      </Snackbar>
+
+      <Snackbar
+        key={`deleted-${deletedLog?.id}`}
+        open={deleteToastOpen}
+        autoHideDuration={UNDO_MS}
+        onClose={(_, reason) => {
+          if (reason === 'clickaway') return
+          setDeleteToastOpen(false)
+        }}
+        anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
+      >
+        <div className="mb-6 flex items-center gap-3 rounded-lg bg-gray-800 px-4 py-3 text-sm font-medium text-white shadow-lg">
+          <Check sx={{ fontSize: 18 }} />
+          <span className="max-w-xs truncate">Deleted “{deletedLog?.title}”</span>
+          <button
+            type="button"
+            onClick={handleUndoDelete}
+            className="cursor-pointer font-semibold underline"
+          >
+            Undo
           </button>
         </div>
       </Snackbar>
@@ -329,6 +469,7 @@ interface LogItemProps {
   dateLabel: string
   onToggleAchievement: (log: IRawLogModel) => void
   toggling: boolean
+  highlighted: boolean
   isFirst: boolean
   isLast: boolean
   onEdit: (log: IRawLogModel) => void
@@ -346,6 +487,7 @@ function LogItem({
   dateLabel,
   onToggleAchievement,
   toggling,
+  highlighted,
   isFirst,
   isLast,
   onDelete,
@@ -354,7 +496,7 @@ function LogItem({
   const [expanded, setExpanded] = useState(false)
   const isLong = (log.description?.length ?? 0) > 140
   return (
-    <li className="grid grid-cols-[88px_24px_1fr] items-start gap-x-3 py-3">
+    <li id={`log-${log.id}`} className="grid grid-cols-[88px_24px_1fr] items-start gap-x-3 py-3">
       <p className="whitespace-nowrap pt-0.5 text-right text-sm text-gray-500">{dateLabel}</p>
 
       <div className="relative flex justify-center self-stretch pt-1.5">
@@ -364,10 +506,20 @@ function LogItem({
         {!isLast && (
           <span className="absolute -bottom-3 left-1/2 top-3 w-0.5 -translate-x-1/2 bg-gray-200" />
         )}
-        <span className="relative z-10 h-3 w-3 rounded-full border border-gray-500 bg-white" />
+        {log.isAchievement ? (
+          <span className="relative z-10 -mt-1.5 flex h-6 w-6 items-center justify-center rounded-full bg-[black] text-white">
+            <WorkspacePremiumOutlined sx={{ fontSize: 16 }} />
+          </span>
+        ) : (
+          <span className="relative z-10 h-3 w-3 rounded-full border border-gray-500 bg-white" />
+        )}
       </div>
 
-      <div className="group -my-2 min-w-0 rounded-lg px-3 py-2 transition-colors hover:bg-gray-50">
+      <div
+        className={`group -my-2 min-w-0 rounded-lg px-3 py-2 transition-colors hover:bg-gray-50 ${
+          highlighted ? 'bg-gray-100 ring-1 ring-gray-300' : ''
+        }`}
+      >
         <div className="flex items-start justify-between gap-2">
           <p className="font-semibold text-gray-700">{log.title}</p>
           <div className="flex shrink-0 gap-1 opacity-0 transition-opacity group-hover:opacity-100 group-focus-within:opacity-100">
@@ -419,7 +571,7 @@ function LogItem({
             aria-checked={log.isAchievement}
             disabled={toggling}
             onClick={() => onToggleAchievement(log)}
-            className="flex cursor-pointer items-center gap-2 rounded-full bg-white px-3 py-1.5 text-sm font-medium transition-colors hover:bg-gray-200 disabled:cursor-not-allowed disabled:opacity-50"
+            className="flex cursor-pointer items-center gap-2 rounded-full bg-white px-3 py-1.5 text-sm font-medium transition-colors hover:bg-gray-200 disabled:cursor-not-allowed"
           >
             <span
               aria-hidden
