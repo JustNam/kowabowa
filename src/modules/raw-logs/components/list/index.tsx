@@ -1,8 +1,15 @@
 'use client'
 
-import { Chip } from '@mui/material'
-import { Check, KeyboardArrowDown, KeyboardArrowRight } from '@mui/icons-material'
+import { Chip, Snackbar } from '@mui/material'
+import {
+  Check,
+  DeleteOutlined,
+  EditOutlined,
+  KeyboardArrowDown,
+  KeyboardArrowRight,
+} from '@mui/icons-material'
 import { Button } from '@/atoms/button'
+import { Modal } from '@/atoms/modal'
 import { useState, useEffect } from 'react'
 import type { IRawLogModel } from '@/interfaces/raw-log.model'
 import { RawLogsApi } from '@/api/rawLogs'
@@ -10,6 +17,7 @@ import { format, parseISO, isSameYear } from 'date-fns'
 import { RawLogsCreate } from '../create'
 import { groupLogsByPeriod } from '../../groupLogs'
 import { AchievementItem } from '../achievement-item'
+import { EmptyState } from '../empty-state'
 
 interface RawLogsListProps {
   /** Scopes the list to one goal and pre-fills the create modal — the
@@ -40,12 +48,17 @@ export function RawLogsList({ goalId, onChanged }: RawLogsListProps = {}) {
   const [logs, setLogs] = useState<IRawLogModel[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [editingLog, setEditingLog] = useState<IRawLogModel | null>(null)
+  const [deletingLog, setDeletingLog] = useState<IRawLogModel | null>(null)
   const [tab, setTab] = useState<'logs' | 'achievements'>('logs')
   const [createOpen, setCreateOpen] = useState(false)
   const [reloadKey, setReloadKey] = useState(0)
   const [openOverrides, setOpenOverrides] = useState<Record<string, boolean>>({})
   const [toggleId, setToggleId] = useState<string | null>(null)
   const [toggleError, setToggleError] = useState<string | null>(null)
+  const [deleting, setDeleting] = useState(false)
+  const [deleteError, setDeleteError] = useState<string | null>(null)
+  const [toastOpen, setToastOpen] = useState(false)
 
   useEffect(() => {
     RawLogsApi.list(goalId)
@@ -64,10 +77,33 @@ export function RawLogsList({ goalId, onChanged }: RawLogsListProps = {}) {
       await RawLogsApi.setAchievement(log.id, !log.isAchievement)
       setReloadKey((k) => k + 1)
       onChanged?.()
+      if (!log.isAchievement) setToastOpen(true)
     } catch (err) {
       setToggleError(err instanceof Error ? err.message : 'Could not update the log')
     } finally {
       setToggleId(null)
+    }
+  }
+
+  const closeDelete = () => {
+    if (deleting) return
+    setDeletingLog(null)
+    setDeleteError(null)
+  }
+
+  const handleDelete = async () => {
+    if (!deletingLog) return
+    setDeleting(true)
+    setDeleteError(null)
+    try {
+      await RawLogsApi.remove(deletingLog.id)
+      setDeletingLog(null)
+      setReloadKey((k) => k + 1)
+      onChanged?.()
+    } catch (err) {
+      setDeleteError(err instanceof Error ? err.message : 'Could not delete the log')
+    } finally {
+      setDeleting(false)
     }
   }
 
@@ -98,70 +134,85 @@ export function RawLogsList({ goalId, onChanged }: RawLogsListProps = {}) {
         />
       </div>
       {toggleError && <p className="text-sm text-red-600">{toggleError}</p>}
-      {tab === 'logs' ? (
-        <div className="flex items-center justify-between">
-          <p className="text-sm text-gray-600">
-            Log your work as you go. You can mark any log as an achievement later.
-          </p>
-          <Button onClick={() => setCreateOpen(true)}>Add log</Button>
-        </div>
-      ) : (
-        <p className="text-sm text-gray-600">Logs you marked as real results.</p>
-      )}
+      {tab === 'logs'
+        ? logs.length > 0 && (
+            <div className="flex items-center justify-between">
+              <p className="text-sm text-gray-600">
+                Log your work as you go. You can mark any log as an achievement later.
+              </p>
+              <Button onClick={() => setCreateOpen(true)}>Add log</Button>
+            </div>
+          )
+        : achievements.length > 0 && (
+            <p className="text-sm text-gray-600">
+              Logs you marked as real results. Remove one to turn it back into a normal log.
+            </p>
+          )}
 
       {tab === 'logs' ? (
-        <div className="flex flex-col">
-          {groups.map((group) => {
-            const open = isOpen(group.key)
-            const achievementCount = group.logs.filter((log) => log.isAchievement).length
-            return (
-              <section key={group.key} className="border-t border-gray-200 py-3 first:border-t-0">
-                <button
-                  type="button"
-                  onClick={() => toggleGroup(group.key)}
-                  aria-expanded={open}
-                  className="flex w-full items-center justify-between text-sm"
-                >
-                  <span className="flex items-center gap-2">
-                    {open ? (
-                      <KeyboardArrowDown aria-hidden sx={{ fontSize: 20 }} />
-                    ) : (
-                      <KeyboardArrowRight aria-hidden sx={{ fontSize: 20 }} />
-                    )}
-                    <span className="font-semibold">{group.label}</span>
-                    {group.range && <span className="text-gray-500">· {group.range}</span>}
-                  </span>
-                  <span className="text-gray-500">
-                    {group.logs.length} {group.logs.length === 1 ? 'log' : 'logs'}
-                    {!open &&
-                      achievementCount > 0 &&
-                      ` · ${achievementCount} ${achievementCount === 1 ? 'achievement' : 'achievements'}`}
-                  </span>
-                </button>
-                {open && (
-                  <ul className="mt-3 flex flex-col">
-                    {' '}
-                    {group.logs.map((log, index) => (
-                      <LogItem
-                        key={log.id}
-                        log={log}
-                        dateLabel={formatLogDate(log.loggedAt, group.key)}
-                        onToggleAchievement={handleToggleAchievement}
-                        toggling={toggleId === log.id}
-                        isFirst={index === 0}
-                        isLast={index === group.logs.length - 1}
-                      />
-                    ))}
-                  </ul>
-                )}
-              </section>
-            )
-          })}
-        </div>
+        logs.length === 0 ? (
+          <EmptyState
+            title="No logs yet"
+            description="Add your first log to start tracking progress on this goal."
+            action={<Button onClick={() => setCreateOpen(true)}>Add log</Button>}
+          />
+        ) : (
+          <div className="flex flex-col">
+            {groups.map((group) => {
+              const open = isOpen(group.key)
+              const achievementCount = group.logs.filter((log) => log.isAchievement).length
+              return (
+                <section key={group.key} className="border-t border-gray-200 py-3 first:border-t-0">
+                  <button
+                    type="button"
+                    onClick={() => toggleGroup(group.key)}
+                    aria-expanded={open}
+                    className="flex w-full items-center justify-between text-sm"
+                  >
+                    <span className="flex items-center gap-2">
+                      {open ? (
+                        <KeyboardArrowDown aria-hidden sx={{ fontSize: 20 }} />
+                      ) : (
+                        <KeyboardArrowRight aria-hidden sx={{ fontSize: 20 }} />
+                      )}
+                      <span className="font-semibold">{group.label}</span>
+                      {group.range && <span className="text-gray-500">· {group.range}</span>}
+                    </span>
+                    <span className="text-gray-500">
+                      {group.logs.length} {group.logs.length === 1 ? 'log' : 'logs'}
+                      {!open &&
+                        achievementCount > 0 &&
+                        ` · ${achievementCount} ${achievementCount === 1 ? 'achievement' : 'achievements'}`}
+                    </span>
+                  </button>
+                  {open && (
+                    <ul className="mt-3 flex flex-col">
+                      {' '}
+                      {group.logs.map((log, index) => (
+                        <LogItem
+                          key={log.id}
+                          log={log}
+                          dateLabel={formatLogDate(log.loggedAt, group.key)}
+                          onToggleAchievement={handleToggleAchievement}
+                          toggling={toggleId === log.id}
+                          isFirst={index === 0}
+                          isLast={index === group.logs.length - 1}
+                          onEdit={setEditingLog}
+                          onDelete={setDeletingLog}
+                        />
+                      ))}
+                    </ul>
+                  )}
+                </section>
+              )
+            })}
+          </div>
+        )
       ) : achievements.length === 0 ? (
-        <p className="text-sm text-gray-500">
-          No achievements yet. Mark a log as an achievement when you add it.
-        </p>
+        <EmptyState
+          title="No achievements yet"
+          description="Mark a log as Achievement in the Logs tab to see it here."
+        />
       ) : (
         <ul className="flex flex-col">
           {achievements.map((log) => (
@@ -169,6 +220,8 @@ export function RawLogsList({ goalId, onChanged }: RawLogsListProps = {}) {
               key={log.id}
               log={log}
               dateLabel={format(parseISO(log.loggedAt), 'dd MMM yyyy')}
+              onRemove={handleToggleAchievement}
+              removing={toggleId === log.id}
             />
           ))}
         </ul>
@@ -183,6 +236,67 @@ export function RawLogsList({ goalId, onChanged }: RawLogsListProps = {}) {
         }}
         defaultGoalId={goalId}
       />
+
+      {editingLog && (
+        <RawLogsCreate
+          open
+          log={editingLog}
+          onClose={() => setEditingLog(null)}
+          onCreated={() => {
+            setReloadKey((k) => k + 1)
+            onChanged?.()
+          }}
+        />
+      )}
+
+      {deletingLog && (
+        <Modal open onClose={closeDelete} title="Delete this log?">
+          <div className="flex flex-col gap-4">
+            <p className="text-sm text-gray-700">
+              <strong>“{deletingLog.title}”</strong> will be permanently deleted. If it&apos;s
+              marked as an achievement, it will also be removed from Achievements.
+            </p>
+            {deleteError && (
+              <p role="alert" className="text-sm text-red-600">
+                {deleteError}
+              </p>
+            )}
+            <div className="flex justify-end gap-2">
+              <Button variant="ghost" onClick={closeDelete} disabled={deleting}>
+                Cancel
+              </Button>
+              <Button variant="destructive" onClick={handleDelete} disabled={deleting}>
+                {deleting ? 'Deleting...' : 'Delete log'}
+              </Button>
+            </div>
+          </div>
+        </Modal>
+      )}
+
+      <Snackbar
+        open={toastOpen}
+        autoHideDuration={3000}
+        onClose={(_, reason) => {
+          if (reason === 'clickaway') return
+          setToastOpen(false)
+        }}
+        anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
+      >
+        <div className="mb-6 flex items-center gap-3 rounded-lg bg-gray-800 px-4 py-3 text-sm font-medium text-white shadow-lg">
+          <Check sx={{ fontSize: 18 }} />
+          Marked as achievement
+          <button
+            type="button"
+            onClick={() => {
+              setTab('achievements')
+              setToastOpen(false)
+            }}
+            className="cursor-pointer font-semibold underline"
+          >
+            View
+          </button>
+        </div>
+      </Snackbar>
     </div>
   )
 }
@@ -217,6 +331,8 @@ interface LogItemProps {
   toggling: boolean
   isFirst: boolean
   isLast: boolean
+  onEdit: (log: IRawLogModel) => void
+  onDelete: (log: IRawLogModel) => void
 }
 
 const formatLogDate = (loggedAt: string, groupKey: string) => {
@@ -225,12 +341,21 @@ const formatLogDate = (loggedAt: string, groupKey: string) => {
   return format(date, isSameYear(date, new Date()) ? 'd MMM' : 'd MMM yyyy')
 }
 
-function LogItem({ log, dateLabel, onToggleAchievement, toggling, isFirst, isLast }: LogItemProps) {
+function LogItem({
+  log,
+  dateLabel,
+  onToggleAchievement,
+  toggling,
+  isFirst,
+  isLast,
+  onDelete,
+  onEdit,
+}: LogItemProps) {
   const [expanded, setExpanded] = useState(false)
   const isLong = (log.description?.length ?? 0) > 140
   return (
-    <li className="grid grid-cols-[72px_24px_1fr] items-start gap-x-3 py-3">
-      <p className="pt-0.5 text-right text-sm text-gray-500">{dateLabel}</p>
+    <li className="grid grid-cols-[88px_24px_1fr] items-start gap-x-3 py-3">
+      <p className="whitespace-nowrap pt-0.5 text-right text-sm text-gray-500">{dateLabel}</p>
 
       <div className="relative flex justify-center self-stretch pt-1.5">
         {!isFirst && (
@@ -242,8 +367,29 @@ function LogItem({ log, dateLabel, onToggleAchievement, toggling, isFirst, isLas
         <span className="relative z-10 h-3 w-3 rounded-full border border-gray-500 bg-white" />
       </div>
 
-      <div className="min-w-0">
-        <p className="font-semibold text-gray-700">{log.title}</p>
+      <div className="group -my-2 min-w-0 rounded-lg px-3 py-2 transition-colors hover:bg-gray-50">
+        <div className="flex items-start justify-between gap-2">
+          <p className="font-semibold text-gray-700">{log.title}</p>
+          <div className="flex shrink-0 gap-1 opacity-0 transition-opacity group-hover:opacity-100 group-focus-within:opacity-100">
+            <button
+              type="button"
+              aria-label="Edit log"
+              onClick={() => onEdit(log)}
+              className="cursor-pointer rounded p-1 text-gray-500 hover:bg-gray-200 hover:text-gray-900"
+            >
+              <EditOutlined sx={{ fontSize: 18 }} />
+            </button>
+            <button
+              type="button"
+              aria-label="Delete log"
+              onClick={() => onDelete(log)}
+              className="cursor-pointer rounded p-1 text-gray-500 hover:bg-gray-200 hover:text-gray-900"
+            >
+              <DeleteOutlined sx={{ fontSize: 18 }} />
+            </button>
+          </div>
+        </div>
+
         {log.description && (
           <>
             <p className={`text-sm text-gray-600 ${expanded ? '' : 'line-clamp-2'}`}>

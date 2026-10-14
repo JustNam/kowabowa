@@ -101,6 +101,8 @@ export function GoalsList() {
           ))}
         </Tabs>
       </div>
+      {loading && <p className="text-sm text-gray-500">Loading goals...</p>}
+
       {isEmpty && (
         <p className="text-sm text-gray-500">
           No goals yet. Create your first one.
