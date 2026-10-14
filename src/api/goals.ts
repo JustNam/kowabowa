@@ -27,7 +27,7 @@ export class GoalsApi {
   }
 
   static async detail(id: string): Promise<{
-    data: { goal: IGoalModel; skillsUsed: ISkillUsed };
+    data: { goal: IGoalModel; skillsUsed: ISkillUsed[] };
   }> {
     const response = await backendApi.get<{ data: IGoalDetailDatabaseModel }>(
       `/goals/${id}`,
