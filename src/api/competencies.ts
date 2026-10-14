@@ -4,6 +4,7 @@ import type {
   ICompetencyModel,
   ICompetencyCreateRequest,
   ICompetencyDatabaseModel,
+  ICompetencyUpdateRequest,
 } from '@/interfaces/competency.model'
 
 export class CompetenciesApi {
@@ -21,5 +22,17 @@ export class CompetenciesApi {
       payload
     )
     return { data: competencyAdapter.toFrontend(response.data.data) }
+  }
+
+  static async update(payload: ICompetencyUpdateRequest): Promise<{ data: ICompetencyModel }> {
+    const response = await backendApi.patch<{ data: ICompetencyDatabaseModel }>(
+      '/skills',
+      payload
+    )
+    return { data: competencyAdapter.toFrontend(response.data.data) }
+  }
+
+  static async remove(id: string): Promise<void> {
+    await backendApi.delete('/skills', { params: {id}})
   }
 }
