@@ -8,7 +8,7 @@
 
 // Đọc file từ dưới lên trên (component nhỏ nhất trước) sẽ dễ hiểu hơn.
 // ============================================================
-
+import { PageLayout } from '@/components/PageLayout'
 import { useEffect, useState } from 'react'
 import Alert from '@mui/material/Alert'
 import CircularProgress from '@mui/material/CircularProgress'
@@ -296,11 +296,11 @@ export function CompetenciesList() {
   
 
   return (
-    <div className="flex flex-col gap-4">
-      {/* Nút Add skill (giữ nguyên từ file mẫu) */}
-      <div className="flex justify-end">
-        <Button onClick={() => setCreateOpen(true)}>Add skill</Button>
-      </div>
+    <PageLayout
+      title="Skills"
+      actions={<Button onClick={() => setCreateOpen(true)}>Add skill</Button>}
+    >
+      <div className="flex flex-col gap-4">
 
       {/* Ô tìm kiếm có icon kính lúp.
           - value + onChange: ô "có kiểm soát", giống ô Title ở 6a
@@ -395,5 +395,6 @@ export function CompetenciesList() {
           />
         )}
     </div>
+    </PageLayout>
   )
 }
