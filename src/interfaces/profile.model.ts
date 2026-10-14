@@ -16,6 +16,7 @@ export interface IProfileDatabaseModel {
   first_name: string | null
   last_name: string | null
   date_of_birth: string | null
+  skills_count?: number
 }
 
 export interface IProfileModel {
@@ -28,4 +29,5 @@ export interface IProfileModel {
   firstName: string | null
   lastName: string | null
   dateOfBirth: string | null
+  skillsCount: number
 }
