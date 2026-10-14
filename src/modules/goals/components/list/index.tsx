@@ -14,6 +14,7 @@ import { EGoalStatus, type IGoalModel } from "@/interfaces/goal.model";
 import { PageLayout } from "@/components/PageLayout";
 import AddIcon from "@mui/icons-material/Add";
 import { RawLogsCreate } from "@/modules/raw-logs/components/create";
+import { GoalActions } from "../actions";
 
 const plural = (n: number, word: string) => `${n} ${word}${n === 1 ? "" : "s"}`;
 type StatusTab = "all" | EGoalStatus;
@@ -131,7 +132,7 @@ export function GoalsList() {
             {visibleGoals.map((goal) => (
               <li
                 key={goal.id}
-                className="flex items-center justify-between gap-4 rounded border border-gray-200 p-4 hover:bg-gray-50"
+                className="relative flex items-center justify-between gap-4 rounded border border-gray-200 p-4 hover:bg-gray-50"
               >
                 <div className="flex min-w-0 flex-col gap-2">
                   <Chip
@@ -142,7 +143,7 @@ export function GoalsList() {
                   />
                   <Link
                     href={ROUTES.GOALS.DETAIL(goal.id)}
-                    className="break-words font-semibold hover:underline"
+                    className="break-words font-semibold after:absolute after:inset-0"
                   >
                     {goal.title}
                   </Link>
@@ -157,7 +158,7 @@ export function GoalsList() {
                   </div>
                 </div>
 
-                <div className="flex shrink-0 items-center gap-1">
+                <div className="relative z-10 flex shrink-0 items-center gap-1">
                   <Button
                     variant="secondary"
                     size="small"
@@ -166,6 +167,11 @@ export function GoalsList() {
                   >
                     Add log
                   </Button>
+                  <GoalActions
+                    goal={goal}
+                    onSaved={() => setReloadKey((k) => k + 1)}
+                    onDeleted={() => setReloadKey((k) => k + 1)}
+                  />
                 </div>
               </li>
             ))}
