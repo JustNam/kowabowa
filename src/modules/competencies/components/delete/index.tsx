@@ -25,8 +25,6 @@ export function CompetenciesDelete({ skill, onClose, onDeleted }: CompetenciesDe
       RawLogsApi.list()
         .then(({ data }) => {
           if (cancelled) return
-          //.filter: giữ lại những log có skillId trùng với skill đang xoá
-          //.length: đếm xem còn lại bao nhiêu log
           const count = data.filter((log) => log.skillId === skill.id).length
           setLogCount(count)
         })
@@ -36,8 +34,6 @@ export function CompetenciesDelete({ skill, onClose, onDeleted }: CompetenciesDe
       return () => {
         cancelled = true
       }
-      //[skill.id]: chạy lại nếu đổi sang skill khác. Thực tế popup được tạo mới mỗi lần mở
-      //(list dùng key={deletingSkill.id}), nên effect chỉ chạy 1 lần.
     }, [skill.id])
 
       const isChecking = logCount === null && !error
