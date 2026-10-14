@@ -20,8 +20,8 @@ export function validateRawLogForm(
 
   if (!values.loggedAt) errors.loggedAt = 'Date is required'
 
-  if (values.description.trim().length > 1000) {
-    errors.description = 'Keep it under 1000 characters'
+  if (values.description.trim().length > 500) {
+    errors.description = 'Keep it under 500 characters'
   }
 
   return errors

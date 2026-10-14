@@ -8,13 +8,14 @@ import { Textarea } from "@/atoms/textarea";
 import { Button } from "@/atoms/button";
 import { DatePicker } from "@/atoms/date-picker";
 import { GoalsApi } from "@/api/goals";
-import type { IGoalCreateRequest } from "@/interfaces/goal.model";
+import type { IGoalCreateRequest, IGoalModel } from "@/interfaces/goal.model";
 import { validateGoalForm } from "../../schema";
 
 interface GoalsCreateProps {
   open: boolean;
   onClose: () => void;
-  onCreated: () => void;
+  onSaved: () => void;
+  goal?: IGoalModel; // nếu có goal thì bật chế độ Edit
 }
 
 type FormErrors = Partial<Record<keyof IGoalCreateRequest, string>>;
@@ -26,13 +27,32 @@ const EMPTY: IGoalCreateRequest = {
   endDate: "",
 };
 
+// chuyển goal thành giá trị form
+const toFormValues = (goal?: IGoalModel): IGoalCreateRequest =>
+  goal
+    ? {
+        title: goal.title,
+        description: goal.description ?? "",
+        startDate: goal.startDate,
+        endDate: goal.endDate,
+      }
+    : EMPTY;
+
 // DataPicker lam viec voi Date, BE can chuoi 'YYYY-MM-DD' -> 2 ham doi qua lai
 const toDate = (s: string) => (s ? parseISO(s) : null);
 const toStr = (d: Date | null) =>
   d && !isNaN(d.getTime()) ? format(d, "yyyy-MM-dd") : "";
 
-export function GoalsCreate({ open, onClose, onCreated }: GoalsCreateProps) {
-  const [values, setValues] = useState<IGoalCreateRequest>(EMPTY);
+export function GoalsCreate({
+  open,
+  onClose,
+  onSaved,
+  goal,
+}: GoalsCreateProps) {
+  const isEdit = !!goal;
+  const [values, setValues] = useState<IGoalCreateRequest>(() =>
+    toFormValues(goal),
+  );
   const [errors, setErrors] = useState<FormErrors>({});
   const [submitting, setSubmitting] = useState(false);
   const [serverError, setServerError] = useState<string | null>(null);
@@ -44,7 +64,7 @@ export function GoalsCreate({ open, onClose, onCreated }: GoalsCreateProps) {
   };
 
   const reset = () => {
-    setValues(EMPTY);
+    setValues(toFormValues(goal));
     setErrors({});
     setServerError(null);
   };
@@ -64,9 +84,11 @@ export function GoalsCreate({ open, onClose, onCreated }: GoalsCreateProps) {
     setSubmitting(true);
     setServerError(null);
     try {
-      await GoalsApi.create({ ...values, title: values.title.trim() });
+      const payload = { ...values, title: values.title.trim() };
+      if (goal) await GoalsApi.update(goal.id, payload);
+      else await GoalsApi.create(payload);
       reset();
-      onCreated();
+      onSaved();
       onClose();
     } catch (err) {
       setServerError((err as Error).message); // loi mang, 401, 400 from BE
@@ -76,7 +98,11 @@ export function GoalsCreate({ open, onClose, onCreated }: GoalsCreateProps) {
   };
 
   return (
-    <Modal open={open} onClose={handleClose} title="Create goal">
+    <Modal
+      open={open}
+      onClose={handleClose}
+      title={isEdit ? "Edit goal" : "Create goal"}
+    >
       <form
         onSubmit={handleSubmit}
         noValidate
@@ -144,7 +170,7 @@ export function GoalsCreate({ open, onClose, onCreated }: GoalsCreateProps) {
             Cancel
           </Button>
           <Button type="submit" disabled={submitting}>
-            {submitting ? "Saving..." : "Create goal"}
+            {submitting ? "Saving..." : isEdit ? "Save changes" : "Create goal"}
           </Button>
         </div>
       </form>
