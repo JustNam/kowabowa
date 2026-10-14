@@ -12,8 +12,7 @@ import { formatDate } from "../../utils";
 import { Button } from "@/atoms/button";
 import { GoalsCreate } from "../create";
 import { useRouter } from "next/navigation";
-import { Menu, MenuItem } from "@mui/material";
-import { Modal } from "@/atoms/modal";
+import { GoalActions } from "../actions";
 
 interface GoalsDetailProps {
   id: string;
@@ -25,10 +24,6 @@ export function GoalsDetail({ id }: GoalsDetailProps) {
   const [error, setError] = useState<string | null>(null);
   const [editOpen, setEditOpen] = useState(false);
   const [reloadKey, setReloadKey] = useState(0);
-  const [menuAnchor, setMenuAnchor] = useState<HTMLElement | null>(null);
-  const [deleteOpen, setDeleteOpen] = useState(false);
-  const [deleting, setDeleting] = useState(false);
-  const [deleteError, setDeleteError] = useState<string | null>(null);
   const router = useRouter();
 
   useEffect(() => {
@@ -52,18 +47,6 @@ export function GoalsDetail({ id }: GoalsDetailProps) {
     );
   }
 
-  const handleDelete = async () => {
-    setDeleting(true);
-    setDeleteError(null);
-    try {
-      await GoalsApi.remove(goal.id);
-      router.push(ROUTES.GOALS.LIST);
-    } catch (err) {
-      setDeleteError((err as Error).message);
-      setDeleting(false);
-    }
-  };
-
   return (
     <div className="flex flex-col gap-6">
       <header className="flex items-center gap-3">
@@ -77,29 +60,12 @@ export function GoalsDetail({ id }: GoalsDetailProps) {
 
         <h1 className="text-2xl font-semibold">{goal.title}</h1>
         <div className="ml-auto">
-          <Button
-            variant="ghost"
-            aria-label="More actions"
-            onClick={(e) => setMenuAnchor(e.currentTarget)}
-          >
-            •••
-          </Button>
+          <GoalActions
+            goal={goal}
+            onSaved={() => setReloadKey((k) => k + 1)}
+            onDeleted={() => router.push(ROUTES.GOALS.LIST)}
+          />
         </div>
-        <Menu
-          anchorEl={menuAnchor}
-          open={!!menuAnchor}
-          onClose={() => setMenuAnchor(null)}
-        >
-          <MenuItem
-            sx={{ color: "error.main" }}
-            onClick={() => {
-              setMenuAnchor(null);
-              setDeleteOpen(true);
-            }}
-          >
-            Delete goal
-          </MenuItem>
-        </Menu>
       </header>
 
       <div className="grid grid-cols-1 overflow-hidden rounded-lg border border-gray-200 lg:grid-cols-[1fr_320px]">
@@ -139,42 +105,6 @@ export function GoalsDetail({ id }: GoalsDetailProps) {
           )}
         </aside>
       </div>
-
-      <Modal
-        open={deleteOpen}
-        onClose={() => {
-          if (!deleting) setDeleteOpen(false);
-        }}
-        title="Delete this goal?"
-      >
-        <div className="flex flex-col gap-4">
-          <p className="text-sm text-gray-700">
-            “{goal.title}” and all of its logs will be deleted. This can&apos;t
-            be undone.
-          </p>
-          {deleteError && (
-            <p role="alert" className="text-sm text-red-600">
-              {deleteError}
-            </p>
-          )}
-          <div className="flex justify-end gap-2">
-            <Button
-              variant="ghost"
-              onClick={() => setDeleteOpen(false)}
-              disabled={deleting}
-            >
-              Cancel
-            </Button>
-            <Button
-              variant="destructive"
-              onClick={handleDelete}
-              disabled={deleting}
-            >
-              {deleting ? "Deleting..." : "Delete goal"}
-            </Button>
-          </div>
-        </div>
-      </Modal>
 
       {editOpen && (
         <GoalsCreate
