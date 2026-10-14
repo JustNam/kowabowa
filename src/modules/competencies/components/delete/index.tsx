@@ -116,12 +116,6 @@ export function CompetenciesDelete({ skill, onClose, onDeleted }: CompetenciesDe
               Cancel
             </Button>
           )}
-
-          {/* TODO: ① Đang kiểm tra HOẶC bị lỗi → chỉ hiện nút Cancel để người dùng thoát ra.
-                Điều kiện: (isChecking || error) && !isInUse && !canDelete
-                📖 || = "hoặc". Đang kiểm tra hoặc có lỗi khi kiểm tra.
-                📖 && !isInUse && !canDelete: tránh hiện 2 nút Cancel khi đã có kết quả
-                   mà handleDelete báo lỗi (lúc đó khối ② đã có Cancel rồi). */}
         </div>
       </div>
     </Modal>
