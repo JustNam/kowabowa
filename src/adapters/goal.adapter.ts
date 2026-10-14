@@ -4,6 +4,8 @@ import type {
   IGoalModel,
   IGoalCreateRequest,
   IGoalCreateDatabaseRequest,
+  IGoalDetailLogDatabaseModel,
+  ISkillUsed,
 } from "@/interfaces/goal.model";
 
 import { EGoalStatus } from "@/interfaces/goal.model";
@@ -14,6 +16,26 @@ function computeStatus(startDate: string, endDate: string): EGoalStatus {
   if (today < startDate) return EGoalStatus.NOT_STARTED;
   if (today > endDate) return EGoalStatus.COMPLETED;
   return EGoalStatus.IN_PROGRESS;
+}
+
+export function skillsUsedFromLogs(
+  logs: IGoalDetailLogDatabaseModel[],
+): ISkillUsed[] {
+  const map = new Map<string, ISkillUsed>();
+  for (const log of logs) {
+    if (!log.skill) continue;
+    const found = map.get(log.skill.id);
+    if (found) {
+      found.logsCount += 1;
+    } else {
+      map.set(log.skill.id, {
+        id: log.skill.id,
+        title: log.skill.title,
+        logsCount: 1,
+      });
+    }
+  }
+  return [...map.values()].sort((a, b) => b.logsCount - a.logsCount);
 }
 
 export class GoalAdapter implements IAdapterWithList<

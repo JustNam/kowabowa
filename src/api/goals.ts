@@ -1,10 +1,11 @@
 import { backendApi } from "@/lib/backendApi";
-import { goalAdapter } from "@/adapters";
+import { goalAdapter, skillsUsedFromLogs } from "@/adapters";
 import type {
   IGoalModel,
   IGoalCreateRequest,
   IGoalDatabaseModel,
   IGoalDetailDatabaseModel,
+  ISkillUsed,
 } from "@/interfaces/goal.model";
 
 /**
@@ -25,16 +26,19 @@ export class GoalsApi {
     return { data: goalAdapter.listToFrontend(response.data.data) };
   }
 
-  static async detail(
-    id: string,
-  ): Promise<{
-    data: { goal: IGoalModel; logs: unknown[]; skills: unknown[] };
+  static async detail(id: string): Promise<{
+    data: { goal: IGoalModel; skillsUsed: ISkillUsed[] };
   }> {
     const response = await backendApi.get<{ data: IGoalDetailDatabaseModel }>(
       `/goals/${id}`,
     );
-    const { goal, logs, skills } = response.data.data;
-    return { data: { goal: goalAdapter.toFrontend(goal), logs, skills } };
+    const { goal, logs } = response.data.data;
+    return {
+      data: {
+        goal: goalAdapter.toFrontend(goal),
+        skillsUsed: skillsUsedFromLogs(logs),
+      },
+    };
   }
 
   static async update(

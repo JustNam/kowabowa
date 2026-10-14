@@ -47,12 +47,23 @@ export interface IGoalCreateDatabaseRequest {
   end_date: string;
 }
 
+export interface IGoalDetailLogDatabaseModel {
+  id: string;
+  skill: { id: string; title: string } | null;
+}
+
+export interface ISkillUsed {
+  id: string;
+  title: string;
+  logsCount: number;
+}
+
 /**
  GET /goals/:id trả {goal, logs, skills}. 
  module Logs/Skills sẽ định nghĩa sau.
  */
 export interface IGoalDetailDatabaseModel {
   goal: IGoalDatabaseModel;
-  logs: unknown[];
+  logs: IGoalDetailLogDatabaseModel[];
   skills: unknown[];
 }
