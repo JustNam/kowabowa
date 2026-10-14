@@ -38,12 +38,14 @@ const links = [
  * layout.tsx above both authenticated pages and /login, /forgot-password.
  */
 export function Sidebar() {
-  const { user, signOut } = useAuth()
+  const { user, loading, signOut } = useAuth()
   const pathname = usePathname()
   const router = useRouter()
   const [collapsed, setCollapsed] = useState(false)
   const [quickLogOpen, setQuickLogOpen] = useState(false)
   const [profile, setProfile] = useState<IProfileModel | null>(null)
+  // Id của user mà lần gọi profile bị lỗi — khi đó thôi skeleton, hiện email thay tên
+  const [profileFailedFor, setProfileFailedFor] = useState<string | null>(null)
   const userId = user?.id
 
   // Auth only knows the email — the name shown next to the avatar comes
@@ -52,18 +54,21 @@ export function Sidebar() {
     if (!userId) return
     ProfilesApi.me()
       .then(({ data }) => setProfile(data))
-      .catch(() => {})
+      .catch(() => setProfileFailedFor(userId))
   }, [userId])
 
-  if (!user) return null
   // if (pathname === ROUTES.ONBOARDING) return null // Xử lý drop onboarding cho làm lại onboarding
   const hiddenRoutes: string[] = [ROUTES.LOGIN, ROUTES.FORGOT_PASSWORD, ROUTES.ONBOARDING]
   if (hiddenRoutes.includes(pathname)) return null // Xử lý danh sách các đường dẫn ko được hiện sidebar
+  // Khung sidebar render ngay cả khi đang chờ getUser() lúc refresh, chỉ ẩn khi chắc chắn chưa đăng nhập
+  if (!loading && !user) return null
 
   // Ignore a profile left over from a previously signed-in user.
-  const ownProfile = profile?.id === user.id ? profile : null
+  const ownProfile = user && profile?.id === user.id ? profile : null
+  // Chỉ phần avatar + tên chờ data: chưa có user, hoặc profile chưa về (và chưa lỗi)
+  const profileLoading = !user || (!ownProfile && profileFailedFor !== user.id)
   const fullName = [ownProfile?.firstName, ownProfile?.lastName].filter(Boolean).join(' ')
-  const displayName = fullName || user.email || '?'
+  const displayName = fullName || user?.email || '?'
   // Same rule as the Profile page: both initials once the name is set,
   // otherwise the first letter of the email.
   const initials = (
@@ -164,7 +169,7 @@ export function Sidebar() {
           <ListItemButton
             component={Link}
             href={ROUTES.PROFILE}
-            title={collapsed ? displayName : (user.email ?? undefined)}
+            title={profileLoading ? undefined : collapsed ? displayName : (user?.email ?? undefined)}
             sx={{
               borderRadius: 1,
               px: 1,
@@ -173,11 +178,21 @@ export function Sidebar() {
               justifyContent: collapsed ? 'center' : 'flex-start',
             }}
           >
-            <Avatar sx={{ width: 32, height: 32, fontSize: 14, fontWeight: 600, bgcolor: 'primary.main' }}>
-              {initials}
-            </Avatar>
-            {!collapsed && (
-              <span className="truncate text-sm font-medium text-slate-900">{displayName}</span>
+            {profileLoading ? (
+              <>
+                {/* Skeleton cùng kích thước avatar 32px + dòng tên text-sm */}
+                <div className="h-8 w-8 shrink-0 rounded-full bg-slate-200" />
+                {!collapsed && <div className="h-4 w-28 rounded bg-slate-200" />}
+              </>
+            ) : (
+              <>
+                <Avatar sx={{ width: 32, height: 32, fontSize: 14, fontWeight: 600, bgcolor: 'primary.main' }}>
+                  {initials}
+                </Avatar>
+                {!collapsed && (
+                  <span className="truncate text-sm font-medium text-slate-900">{displayName}</span>
+                )}
+              </>
             )}
           </ListItemButton>
 
