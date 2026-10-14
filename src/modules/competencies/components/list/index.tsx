@@ -197,7 +197,6 @@ export function CompetenciesList() {
     }
   }, [reloadKey])
 
-  // ----- Edit / Delete -----
   function handleEdit(skill: ICompetencyModel) {
     setEditingSkill(skill)
   }
