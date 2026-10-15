@@ -9,7 +9,6 @@ import { GoalsApi } from "@/api/goals";
 import type { IGoalCreateRequest, IGoalModel } from "@/interfaces/goal.model";
 import { validateGoalForm } from "../../schema";
 import { DateRangeField } from "../date-range-field";
-import { format } from "date-fns";
 
 interface GoalsCreateProps {
   open: boolean;
@@ -36,7 +35,7 @@ const toFormValues = (goal?: IGoalModel): IGoalCreateRequest =>
         startDate: goal.startDate,
         endDate: goal.endDate,
       }
-    : { ...EMPTY, startDate: format(new Date(), "yyyy-MM-dd") };
+    : EMPTY;
 
 export function GoalsCreate({
   open,
