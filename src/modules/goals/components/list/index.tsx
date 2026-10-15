@@ -15,6 +15,8 @@ import { PageLayout } from "@/components/PageLayout";
 import AddIcon from "@mui/icons-material/Add";
 import { RawLogsCreate } from "@/modules/raw-logs/components/create";
 import { GoalActions } from "../actions";
+import { useRouter } from "next/navigation";
+import TrackChangesIcon from "@mui/icons-material/TrackChanges";
 
 const plural = (n: number, word: string) => `${n} ${word}${n === 1 ? "" : "s"}`;
 type StatusTab = "all" | EGoalStatus;
@@ -28,7 +30,6 @@ const TABS: StatusTab[] = [
 
 export function GoalsList() {
   const [createOpen, setCreateOpen] = useState(false);
-
   const [goals, setGoals] = useState<IGoalModel[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -36,6 +37,8 @@ export function GoalsList() {
   const [search, setSearch] = useState("");
   const [tab, setTab] = useState<StatusTab>("all");
   const [logGoalId, setLogGoalId] = useState<string | null>(null);
+
+  const router = useRouter();
 
   useEffect(() => {
     let cancelled = false;
@@ -79,6 +82,12 @@ export function GoalsList() {
     setTab("all");
   };
 
+  const retry = () => {
+    setLoading(true);
+    setError(null);
+    setReloadKey((k) => k + 1);
+  };
+
   return (
     <PageLayout
       title="Goals"
@@ -90,34 +99,61 @@ export function GoalsList() {
       }
     >
       <div className="flex flex-col gap-4">
-        <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-          <div className="w-full md:w-72">
-            <Input
-              placeholder="Search goals"
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-            />
-          </div>
-          <Tabs
-            value={tab}
-            onChange={(_, value) => setTab(value)}
-            variant="scrollable"
+        {loading && (
+          <p role="status" className="py-10 text-center text-sm text-gray-500">
+            Loading your goals...
+          </p>
+        )}
+
+        {error && (
+          <div
+            role="alert"
+            className="flex flex-col items-center gap-3 rounded border border-gray-200 py-10 text-center"
           >
-            {TABS.map((t) => (
-              <Tab
-                key={t}
-                value={t}
-                label={`${t === "all" ? "All" : GOAL_STATUS_LABEL[t]} (${countFor(t)})`}
+            <p className="text-sm text-gray-700">{error}</p>
+            <Button variant="secondary" onClick={retry}>
+              Try agian
+            </Button>
+          </div>
+        )}
+
+        {ready && goals.length > 0 && (
+          <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+            <div className="w-full md:w-72">
+              <Input
+                placeholder="Search goals"
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
               />
-            ))}
-          </Tabs>
-        </div>
-        {loading && <p className="text-sm text-gray-500">Loading goals...</p>}
+            </div>
+            <Tabs
+              value={tab}
+              onChange={(_, value) => setTab(value)}
+              variant="scrollable"
+            >
+              {TABS.map((t) => (
+                <Tab
+                  key={t}
+                  value={t}
+                  label={`${t === "all" ? "All" : GOAL_STATUS_LABEL[t]} (${countFor(t)})`}
+                />
+              ))}
+            </Tabs>
+          </div>
+        )}
 
         {isEmpty && (
-          <p className="text-sm text-gray-500">
-            No goals yet. Create your first one.
-          </p>
+          <div className="flex flex-col items-center gap-3 rounded border border-dashed border-gray-300 px-6 py-12 text-center">
+            <TrackChangesIcon sx={{ fontSize: 40, color: "text.disabled" }} />
+            <h2 className="text-base font-semibold">No goals yet</h2>
+            <p className="max-w-sm text-sm text-gray-500">
+              Set a goal for what you are working toward, then log your progress
+              as you go.
+            </p>
+            <Button startIcon={<AddIcon />} onClick={() => setCreateOpen(true)}>
+              Create your first goal
+            </Button>
+          </div>
         )}
 
         {noMatch && (
@@ -183,7 +219,7 @@ export function GoalsList() {
         <GoalsCreate
           open={createOpen}
           onClose={() => setCreateOpen(false)}
-          onSaved={() => setReloadKey((k) => k + 1)}
+          onSaved={(saved) => router.push(ROUTES.GOALS.DETAIL(saved.id))}
         />
 
         {/* Always mounted: closing the form must not unmount the achievement dialog. */}

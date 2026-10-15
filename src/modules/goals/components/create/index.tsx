@@ -1,20 +1,19 @@
 "use client";
 
 import { useState, type FormEvent } from "react";
-import { format, parseISO } from "date-fns";
 import { Modal } from "@/atoms/modal";
 import { Input } from "@/atoms/input";
 import { Textarea } from "@/atoms/textarea";
 import { Button } from "@/atoms/button";
-import { DatePicker } from "@/atoms/date-picker";
 import { GoalsApi } from "@/api/goals";
 import type { IGoalCreateRequest, IGoalModel } from "@/interfaces/goal.model";
 import { validateGoalForm } from "../../schema";
+import { DateRangeField } from "../date-range-field";
 
 interface GoalsCreateProps {
   open: boolean;
   onClose: () => void;
-  onSaved: () => void;
+  onSaved: (saved: IGoalModel) => void;
   goal?: IGoalModel; // nếu có goal thì bật chế độ Edit
 }
 
@@ -37,11 +36,6 @@ const toFormValues = (goal?: IGoalModel): IGoalCreateRequest =>
         endDate: goal.endDate,
       }
     : EMPTY;
-
-// DataPicker lam viec voi Date, BE can chuoi 'YYYY-MM-DD' -> 2 ham doi qua lai
-const toDate = (s: string) => (s ? parseISO(s) : null);
-const toStr = (d: Date | null) =>
-  d && !isNaN(d.getTime()) ? format(d, "yyyy-MM-dd") : "";
 
 export function GoalsCreate({
   open,
@@ -85,10 +79,12 @@ export function GoalsCreate({
     setServerError(null);
     try {
       const payload = { ...values, title: values.title.trim() };
-      if (goal) await GoalsApi.update(goal.id, payload);
-      else await GoalsApi.create(payload);
+
+      const { data: saved } = goal
+        ? await GoalsApi.update(goal.id, payload)
+        : await GoalsApi.create(payload);
       reset();
-      onSaved();
+      onSaved(saved);
       onClose();
     } catch (err) {
       setServerError((err as Error).message); // loi mang, 401, 400 from BE
@@ -117,37 +113,16 @@ export function GoalsCreate({
           required
           autoFocus
         />
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-          <DatePicker
-            label="Start Date"
-            value={toDate(values.startDate)}
-            onChange={(d) => setField("startDate", toStr(d as Date | null))}
-            slotProps={{
-              textField: {
-                size: "small",
-                fullWidth: true,
-                required: true,
-                error: !!errors.startDate,
-                helperText: errors.startDate,
-              },
-            }}
-          />
-          <DatePicker
-            label="End date"
-            value={toDate(values.endDate)}
-            onChange={(d) => setField("endDate", toStr(d as Date | null))}
-            minDate={toDate(values.startDate) ?? undefined}
-            slotProps={{
-              textField: {
-                size: "small",
-                fullWidth: true,
-                required: true,
-                error: !!errors.endDate,
-                helperText: errors.endDate,
-              },
-            }}
-          />
-        </div>
+        <DateRangeField
+          startDate={values.startDate}
+          endDate={values.endDate}
+          onChange={(start, end) => {
+            setField("startDate", start);
+            setField("endDate", end);
+          }}
+          startError={errors.startDate}
+          endError={errors.endDate}
+        />
         <Textarea
           label="Description (optional)"
           value={values.description}
