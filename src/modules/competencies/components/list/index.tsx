@@ -1,22 +1,11 @@
 'use client'
-// Dòng trên bắt buộc: file này chạy trên trình duyệt (có state, nút bấm).
+//   CompetenciesList       
+//     ├─ ô Search   
+//     │    └─ SkillTable       
+//     │         └─ SkillRow × 8
+//                    └─ SkillActions  
+//     └─ dòng "Showing…" + Pagination
 
-// ============================================================
-// QUY ƯỚC TRONG FILE NÀY
-//   - Code viết đầy đủ: phần quan trọng, mới với bạn. Đọc kỹ comment.
-//   - 👉 TỰ VIẾT: phần đơn giản, bạn tự gõ theo hướng dẫn.
-//     Bí thì mở file index.full.tsx (bản hoàn chỉnh) để đối chiếu.
-//
-// CẤU TRÚC: trang được lắp từ các component nhỏ, lồng vào nhau như búp bê Nga
-//
-//   CompetenciesList            (cả trang: nút, ô tìm kiếm, 2 nhóm)
-//     ├─ SkillGroup "My skills"       (tiêu đề nhóm + danh sách)
-//     │    └─ SkillItem × n            (một dòng skill)
-//     │         └─ SkillActions        (nút Edit / Delete)
-//     └─ SkillGroup "System skills"
-//          └─ SkillItem × n
-//               └─ SkillActions        (nút mờ + tooltip)
-//
 // Đọc file từ dưới lên trên (component nhỏ nhất trước) sẽ dễ hiểu hơn.
 // ============================================================
 
@@ -36,6 +25,15 @@ import { CompetenciesApi } from '@/api/competencies'
 import { Button } from '@/atoms/button'
 import type { ICompetencyModel } from '@/interfaces/competency.model'
 import { CompetenciesCreate } from '../create'
+import { CompetenciesEdit } from '../edit'
+import { CompetenciesDelete } from '../delete'
+import Table from '@mui/material/Table'
+import TableHead from '@mui/material/TableHead'
+import TableBody from '@mui/material/TableBody'
+import TableRow from '@mui/material/TableRow'   
+import TableCell from '@mui/material/TableCell'         
+import TableContainer from '@mui/material/TableContainer'
+import Pagination from '@mui/material/Pagination'
 
 // đổi format từ timestamp sang định dạng như trong wireframe
 function formatDate(value: string): string {
@@ -46,14 +44,13 @@ function formatDate(value: string): string {
   })
 }
 
+//quy định số item trên 1 page giới hạn ở 8
+const PAGE_SIZE = 8
+
 // ============================================================
 // COMPONENT 1: Tạo component SkillActions, 2 nút Edit / Delete của một skill
 // ============================================================
 
-// 👉 TỰ VIẾT: khai báo props, đặt tên ISkillActionsProps, gồm 3 thông tin:
-//   - skill: kiểu ICompetencyModel
-//   - onEdit: một hàm, nhận vào một skill (kiểu ICompetencyModel), không trả gì
-//   - onDelete: giống onEdit
 interface ISkillActionsProps {
   skill: ICompetencyModel
   onEdit: (skill:ICompetencyModel) => void
@@ -65,7 +62,7 @@ function SkillActions(props: ISkillActionsProps) {
   // return bên trong if: là skill isSystem thì trả giao diện này rồi dừng.
   if (props.skill.isSystem) {
     return (
-      <div className="flex gap-1">
+      <div className="flex justify-end gap-1">
         {/* QUAN TRỌNG: nút disabled KHÔNG nhận sự kiện hover chuột.
             Đặt Tooltip thẳng lên nút disabled thì tooltip không bao giờ hiện.
             Cách xử lý: bọc nút trong <span>. Tooltip nghe hover trên <span>,
@@ -78,7 +75,6 @@ function SkillActions(props: ISkillActionsProps) {
           </span>
         </Tooltip>
 
-        {/* 👉 TỰ VIẾT: tooltip cho nút Delete.*/}
         <Tooltip title="System skills can't be deleted">
           <span>
             <IconButton size="small" disabled aria-label="Delete">
@@ -92,7 +88,7 @@ function SkillActions(props: ISkillActionsProps) {
 
   // ----- Skill của người dùng: 2 nút bình thường -----
   return (
-    <div className="flex gap-1">
+    <div className="flex justify-end gap-1">
       {/* Khi bấm: gọi hàm onEdit cha đưa xuống, kèm skill của dòng này,
           để cha biết người dùng muốn sửa skill nào.
           Phải có "() =>" ở đầu, nếu không hàm chạy ngay khi vẽ, không chờ bấm. */}
@@ -100,7 +96,6 @@ function SkillActions(props: ISkillActionsProps) {
         <EditOutlinedIcon fontSize="small" />
       </IconButton>
 
-      {/* 👉 TỰ VIẾT: nút Delete. Copy nút Edit ở trên rồi sửa:*/}
       <IconButton size="small" aria-label="Delete" onClick={() => props.onDelete(props.skill)}>
         <DeleteOutlineIcon fontSize="small" />
       </IconButton>
@@ -109,105 +104,104 @@ function SkillActions(props: ISkillActionsProps) {
 }
 
 // ============================================================
-// COMPONENT 2: SkillItem, một dòng skill trong danh sách
-// Bên trái: tên + mô tả. Bên phải: ngày tạo + nút.
+// COMPONENT 2: SkillRow, một dòng skill trong table
 // ============================================================
 
-// 👉 TỰ VIẾT: khai báo props, đặt tên ISkillItemProps.
-// Giống hệt ISkillActionsProps (skill, onEdit, onDelete), copy rồi đổi tên.
-// Vì sao SkillItem cũng cần onEdit, onDelete dù nó không tự dùng?
+// Vì sao SkillRow cũng cần onEdit, onDelete dù nó không tự dùng?
 // Vì nó phải "chuyền tay" 2 hàm này xuống cho SkillActions bên trong nó.
-interface ISkillItemProps {
+interface ISkillRowProps {
   skill: ICompetencyModel
   onEdit: (skill: ICompetencyModel) => void
   onDelete: (skill: ICompetencyModel) => void
 }
 
-function SkillItem(props: ISkillItemProps) {
+function SkillRow(props: ISkillRowProps) {
   return (
-    // justify-between: phần đầu dạt trái, phần cuối dạt phải.
-    // py-3: khoảng cách trên dưới mỗi dòng.
-    <li className="flex items-center justify-between gap-4 py-3">
-      {/* Bên trái: tên và mô tả, xếp dọc */}
-      <div className="flex flex-col">
+    <TableRow hover>
+      <TableCell>
         <Typography variant="body2" sx={{ fontWeight: 600 }}>
           {props.skill.title}
         </Typography>
+      </TableCell>
 
-        {/* 👉 TỰ VIẾT: mô tả, chỉ hiện khi props.skill.description khác null.
-              Dùng mẫu "A && B" như đã học, với B là
-              <Typography variant="body2" color="text.secondary"> chứa mô tả.
-              color="text.secondary" lấy màu chữ phụ từ theme, không viết mã màu. */}
-      {/* ?.trim(): null, '' hoặc toàn khoảng trắng đều thành rỗng/undefined -> không hiện */}
-      {props.skill.description?.trim() && (
+      <TableCell>
         <Typography variant="body2" color="text.secondary">
           {props.skill.description}
         </Typography>
-      )}
-      </div>
+      </TableCell>
 
-      {/* Bên phải: ngày tạo và nút, xếp ngang */}
-      <div className="flex items-center gap-4">
-        {/* 👉 TỰ VIẾT: ngày tạo. Một Typography giống mô tả ở trên,
-              nội dung là {formatDate(props.skill.createdAt)} */}
-        <Typography variant="body2" color="text.secondary">
+      <TableCell>
+        <Typography variant="body2" color="text.secondary" sx={{ whiteSpace: 'nowrap' }}>
           {formatDate(props.skill.createdAt)}
         </Typography>
-        {/* Chuyền tay: lấy skill và 2 hàm nhận từ cha, đưa tiếp xuống SkillActions */}
-        <SkillActions skill={props.skill} onEdit={props.onEdit} onDelete={props.onDelete} />
-      </div>
-    </li>
+      </TableCell>
+
+      <TableCell align="right">
+          <SkillActions skill={props.skill} onEdit={props.onEdit} onDelete={props.onDelete} />
+      </TableCell>
+    </TableRow>
   )
 }
 
 // ============================================================
-// COMPONENT 3: SkillGroup, một nhóm skill (tiêu đề + danh sách)
-// Dùng 2 lần: một cho "My skills", một cho "System skills".
-// Viết 1 lần, dùng nhiều lần, chỉ cần đưa vào dữ liệu khác nhau.
+// COMPONENT 3: SkillTable, cả bảng
 // ============================================================
-interface ISkillGroupProps {
-  title: string                                    // tên nhóm, ví dụ "My skills"
-  skills: ICompetencyModel[]                       // các skill thuộc nhóm này (một MẢNG)
-  emptyMessage: string                             // câu hiện ra khi nhóm không có skill nào
-  onEdit: (skill: ICompetencyModel) => void        // chuyền tay xuống SkillItem
-  onDelete: (skill: ICompetencyModel) => void      // chuyền tay xuống SkillItem
+interface ISkillTableProps {
+  skills: ICompetencyModel[]                   // CHỈ các skill của trang hiện tại (tối đa 8)
+  emptyMessage: string                         // Câu hiện khi không có skill nào
+  onEdit: (skill: ICompetencyModel) => void
+  onDelete: (skill: ICompetencyModel) => void
 }
 
-function SkillGroup(props: ISkillGroupProps) {
-  return (
-    <section className="flex flex-col gap-2">
-      {/* Tiêu đề nhóm kèm số lượng, ví dụ "My skills (3)" */}
-      <Typography variant="subtitle2">
-        {props.title} ({props.skills.length})
-      </Typography>
+const headCellSx = {
+  fontSize: 12,
+  fontWeight: 600,
+  color: 'text.secondary',      // 📖 chữ xám (màu chữ phụ trong theme)
+  textTransform: 'uppercase',   // 📖 tự viết HOA → trong code vẫn gõ "Skill" bình thường
+  bgcolor: 'grey.100',          // 📖 nền xám nhạt cho hàng tiêu đề, như wireframe
+} as const
 
-      {/* 👉 TỰ VIẾT: nếu props.skills.length bằng 0 thì hiện props.emptyMessage,
-            trong <Typography variant="body2" color="text.secondary">.
-            Dùng mẫu "A && B". */}
-      {props.skills.length === 0 && (
-        <Typography variant="body2" color="text.secondary">
-          {props.emptyMessage}
-        </Typography>
-      )}
-      {/* Có ít nhất 1 skill thì hiện danh sách trong một khung viền (Paper outlined). */}
-      {props.skills.length > 0 && (
-        <Paper variant="outlined">
-          <ul className="flex flex-col px-4">
-            {/* .map: mỗi skill -> một SkillItem.
-                key đặt trên SkillItem (thứ được .map tạo ra), không đặt bên trong nó.
-                key không phải props: SkillItem không đọc được key, nó chỉ dành cho React. */}
+function SkillTable(props: ISkillTableProps) {
+  return (
+    <TableContainer component={Paper} variant="outlined">
+      <Table size="small">
+        <TableHead>
+          <TableRow>
+            {/* width: đặt độ rộng cho cột để các trang không bị nhảy độ rộng
+                  khi tên skill dài/ngắn khác nhau. Cột DESCRIPTION không đặt → lấy phần còn lại. */}
+            <TableCell sx={{ ...headCellSx, width: '25%' }}>Skill</TableCell>
+            <TableCell sx={headCellSx}>Description</TableCell>
+            <TableCell sx={{ ...headCellSx, width: 140 }}>Created at</TableCell>
+            <TableCell sx={{ ...headCellSx, width: 100 }} align="right">Actions</TableCell>
+          </TableRow>
+        </TableHead>
+        {/* 📖 { ...headCellSx, width: '25%' }: dấu ... (spread) = "chép toàn bộ style
+              trong headCellSx vào đây, rồi thêm width". */}
+
+        <TableBody>
+          {/* nếu props.skills.length === 0 thì hiện MỘT dòng thông báo*/}
+              {props.skills.length === 0 && (
+                <TableRow>
+                  {/* 📖 colSpan={4}: một ô "trải dài" qua cả 4 cột.*/}
+                  <TableCell colSpan={4} align="center">
+                    <Typography variant="body2" color="text.secondary">
+                      {props.emptyMessage}
+                    </Typography>
+                  </TableCell>
+                </TableRow>
+              )}
+
             {props.skills.map((skill) => (
-              <SkillItem
+              <SkillRow
                 key={skill.id}
                 skill={skill}
                 onEdit={props.onEdit}
                 onDelete={props.onDelete}
               />
             ))}
-          </ul>
-        </Paper>
-      )}
-    </section>
+        </TableBody>
+      </Table>
+    </TableContainer>
   )
 }
 
@@ -216,13 +210,15 @@ function SkillGroup(props: ISkillGroupProps) {
 // ============================================================
 export function CompetenciesList() {
   // ----- State tải dữ liệu (giữ nguyên từ file mẫu) -----
+  const [page, setPage] = useState(1)
   const [skills, setSkills] = useState<ICompetencyModel[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [createOpen, setCreateOpen] = useState(false)
   const [reloadKey, setReloadKey] = useState(0)
   const [search, setSearch] = useState ('')
-  // 👉 TỰ VIẾT: state search, setSearch: chữ gõ vào ô tìm kiếm, ban đầu là ''
+  const [editingSkill, setEditingSkill] = useState<ICompetencyModel | null>(null)
+  const [deletingSkill, setDeletingSkill] = useState<ICompetencyModel | null>(null)
 
   // ----- Tải danh sách (giữ nguyên từ file mẫu, đã giải thích trước) -----
   useEffect(() => {
@@ -246,17 +242,17 @@ export function CompetenciesList() {
     }
   }, [reloadKey])
 
-  // ----- Edit / Delete: CHƯA làm -----
+  // ----- Edit / Delete -----
   // CompetenciesApi chưa có hàm update và remove (BE đã có PATCH và DELETE).
   // Tạm thời chỉ in ra tab Console của trình duyệt (F12) để thử nút bấm.
   function handleEdit(skill: ICompetencyModel) {
-    // TODO: mở modal sửa skill. Sửa xong gọi setReloadKey((k) => k + 1)
-    console.log('Edit', skill.id)
+    // mở modal sửa skill. Sửa xong gọi setReloadKey((k) => k + 1)
+    setEditingSkill(skill)
   }
   function handleDelete(skill: ICompetencyModel) {
-    // TODO: mở modal xác nhận xoá (src/atoms/modal).
+    // mở modal xác nhận xoá (src/atoms/modal).
     // BE trả lỗi 409 "Skill is used in logs" nếu skill đang được dùng trong log.
-    console.log('Delete', skill.id)
+    setDeletingSkill(skill)
   }
 
   // ----- Tính dữ liệu để hiển thị -----
@@ -272,14 +268,32 @@ export function CompetenciesList() {
   const filteredSkills = skills.filter((skill) =>
     skill.title.toLowerCase().includes(keyword)
   )
-
-  // Bước 2: tách 2 nhóm TỪ danh sách đã lọc (không phải từ skills gốc),
-  // để tìm kiếm áp dụng cho cả hai nhóm.
-  const mySkills = filteredSkills.filter((skill) => skill.isSystem === false)
-  // 👉 TỰ VIẾT: systemSkills, giống dòng trên nhưng isSystem === true
-  const systemSkills = filteredSkills.filter((skill) => skill.isSystem === true)
-  // Bước 3: có đang tìm kiếm không? Dùng để chọn câu thông báo khi nhóm trống.
   const isSearching = keyword !== ''
+  // 📖 Tổng số trang. Ví dụ 11 skill, mỗi trang 8:
+  //    11 / 8 = 1.375  →  Math.ceil (làm tròn LÊN) = 2 trang.
+  //    Math.max(1, ...): khi không có skill nào (0 / 8 = 0) vẫn coi là có 1 trang,
+  //    tránh trường hợp "trang 1 / 0".
+  const totalPages = Math.max(1, Math.ceil(filteredSkills.length/ PAGE_SIZE))
+  // 📖 Trang đang xem — không được vượt quá tổng số trang.
+  //    Ví dụ: đang ở trang 2 (có đúng 1 skill), xoá skill đó → chỉ còn 1 trang.
+  //    page vẫn là 2 → bảng trống. Math.min(2, 1) = 1 → tự quay về trang 1.
+  const currentPage = Math.min(page, totalPages)
+
+  // 📖 Vị trí bắt đầu cắt. Trang 1 → 0, trang 2 → 8, trang 3 → 16...
+  //    (Mảng đếm từ 0, nên skill đầu tiên ở vị trí 0.)
+  const startIndex = (currentPage - 1) * PAGE_SIZE
+
+  // 📖 .slice(bắt_đầu, kết_thúc): cắt ra một đoạn của mảng, KHÔNG lấy phần tử ở vị trí kết_thúc.
+  //    Trang 1: slice(0, 8)  → vị trí 0..7  (8 skill)
+  //    Trang 2: slice(8, 16) → vị trí 8..15 (nếu chỉ có 11 skill thì lấy 8..10, tự dừng)
+  const pageSkills = filteredSkills.slice(startIndex, startIndex + PAGE_SIZE)
+
+  // 📖 Số cho dòng "Showing 1–8 of 11 skills"
+  //    Trang 2 của 11 skill: from = 9, to = 8 + 3 = 11  →  "Showing 9–11 of 11 skills"
+  const from = startIndex + 1
+  const to = startIndex + pageSkills.length
+
+  
 
   return (
     <div className="flex flex-col gap-4">
@@ -298,10 +312,14 @@ export function CompetenciesList() {
         size="small"
         placeholder="Search skill"
         value={search}
-        onChange={(event) => setSearch(event.target.value)}
+        onChange={(event) => {
+          setSearch(event.target.value)
+          setPage(1)
+        }}
         className="w-full max-w-xs"
         slotProps={{
           input: {
+            sx: { bgcolor: 'background.paper' },
             startAdornment: (
               <InputAdornment position="start">
                 <SearchIcon fontSize="small" />
@@ -315,36 +333,42 @@ export function CompetenciesList() {
       {loading && <CircularProgress size={24} />}
       {error && <Alert severity="error">{error}</Alert>}
 
-      {/* Chỉ hiện 2 nhóm khi tải xong và không lỗi. Nếu không bọc, lúc đang
+      {/* Chỉ hiện bảng khi tải xong và không lỗi. Nếu không bọc, lúc đang
           tải hay lỗi sẽ hiện nhầm "No skills yet" vì skills vẫn là [].
-          <> </> gom 2 nhóm lại, vì sau && chỉ đặt được MỘT phần tử. */}
+          <> </> gom bảng lại, vì sau && chỉ đặt được MỘT phần tử. */}
       {!loading && !error && (
         <>
-          {/* Dùng SkillGroup lần 1: nhóm của người dùng.
-              emptyMessage chọn bằng "điều kiện ? A : B" (đúng thì A, sai thì B):
-              đang tìm mà không thấy -> báo không khớp; không tìm -> mời tạo skill. */}
-          <SkillGroup
-            title="My skills"
-            skills={mySkills}
+          <SkillTable
+            skills={pageSkills}
             emptyMessage={isSearching ? 'No skills match your search.' : 'No skills yet. Add your first one.'}
             onEdit={handleEdit}
             onDelete={handleDelete}
           />
 
-          {/* 👉 TỰ VIẾT: dùng SkillGroup lần 2 cho skill hệ thống. Copy khối trên rồi sửa:
-                - title là "System skills"
-                - skills là systemSkills
-                - emptyMessage: khi không tìm kiếm thì dùng 'No system skills.'
-              onEdit, onDelete giữ nguyên: SkillActions tự biết skill hệ thống
-              thì làm mờ nút, nên không cần xử lý riêng ở đây. */}
+          {filteredSkills.length > 0 && (
+            <div className="flex items-center justify-between">
+              <Typography variant="body2" color="text.secondary">
+                Showing {from}–{to} of {filteredSkills.length} skills
+              </Typography>
 
-          <SkillGroup
-            title="System skills"
-            skills={systemSkills}
-            emptyMessage={isSearching ? 'No skills match your search.' : 'No system skills.'}
-            onEdit={handleEdit}
-            onDelete={handleDelete}
-          />
+              {/* 📖 Pagination của MUI tự vẽ nút ‹ 1 2 3 › và tự biết khi nào làm mờ ‹ ›.
+                    - count: tổng số trang
+                    - page: trang đang được chọn (tô đen)
+                    - onChange: bấm sang trang khác → MUI gọi hàm này,
+                      tham số thứ 2 (value) là SỐ TRANG vừa bấm.
+                      Tham số thứ 1 (_event) không dùng → đặt tên có dấu _ ở đầu
+                      để báo "cố ý bỏ qua".
+                    - shape="rounded" + variant="outlined": nút vuông bo góc có viền, như wireframe */}
+              <Pagination
+                count={totalPages}
+                page={currentPage}
+                onChange={(_event, value) => setPage(value)}
+                shape="rounded"
+                variant="outlined"
+                color="primary"
+              />
+            </div>
+          )}
         </>
       )}
 
@@ -354,6 +378,22 @@ export function CompetenciesList() {
         onClose={() => setCreateOpen(false)}
         onCreated={() => setReloadKey((k) => k + 1)}
       />
+        {editingSkill && (
+          <CompetenciesEdit
+            key={editingSkill.id}
+            skill={editingSkill}
+            onClose={() => setEditingSkill(null)}        // 📖 về null = đóng popup
+            onSaved={() => setReloadKey((k) => k + 1)}   // 📖 tải lại list, giống Create
+          />
+        )}
+        {deletingSkill && (
+          <CompetenciesDelete
+            key={deletingSkill.id}
+            skill={deletingSkill}
+            onClose={() => setDeletingSkill(null)}        // 📖 về null = đóng popup
+            onDeleted={() => setReloadKey((k) => k + 1)}   // 📖 tải lại list, giống Create
+          />
+        )}
     </div>
   )
 }

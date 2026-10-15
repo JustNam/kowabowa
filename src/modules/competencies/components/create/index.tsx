@@ -84,7 +84,7 @@ export function CompetenciesCreate({ open, onClose, onCreated }: CompetenciesCre
           rows={4}
         />
         </div>
-        <div className="-mx-6 flex justify-end gap-2 border-t border-gray-200 px-6 pt-4">
+        <div className="-mx-6 flex justify-end gap-2 px-6 pt-4">
           <Button type="button" variant="ghost" onClick={handleClose} disabled={submitting}>
             Cancel
           </Button>

@@ -101,7 +101,7 @@ export function GoalsList() {
       <div className="flex flex-col gap-4">
         {loading && (
           <p role="status" className="py-10 text-center text-sm text-gray-500">
-            Loading to your success...
+            Loading your goals...
           </p>
         )}
 
@@ -222,14 +222,13 @@ export function GoalsList() {
           onSaved={(saved) => router.push(ROUTES.GOALS.DETAIL(saved.id))}
         />
 
-        {logGoalId && (
-          <RawLogsCreate
-            open
-            defaultGoalId={logGoalId}
-            onClose={() => setLogGoalId(null)}
-            onCreated={() => setReloadKey((k) => k + 1)}
-          />
-        )}
+        {/* Always mounted: closing the form must not unmount the achievement dialog. */}
+        <RawLogsCreate
+          open={logGoalId !== null}
+          defaultGoalId={logGoalId ?? undefined}
+          onClose={() => setLogGoalId(null)}
+          onCreated={() => setReloadKey((k) => k + 1)}
+        />
       </div>
     </PageLayout>
   );

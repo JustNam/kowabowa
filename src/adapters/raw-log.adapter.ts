@@ -3,6 +3,7 @@ import type {
   IRawLogModel,
   IRawLogCreateRequest,
   IRawLogCreateDatabaseRequest,
+    IRawLogUpdateDatabaseRequest,
 } from '@/interfaces/raw-log.model'
 
 export class RawLogAdapter {
@@ -39,6 +40,16 @@ export class RawLogAdapter {
     if (frontendData.isAchievement !== undefined) dbData.is_achievement = frontendData.isAchievement
 
     return dbData
+  }
+  updateRequestToDatabase(frontendData: IRawLogCreateRequest): IRawLogUpdateDatabaseRequest {
+    return {
+      title: frontendData.title,
+      goal_id: frontendData.goalId,
+      logged_at: frontendData.loggedAt,
+      description: frontendData.description ?? null,
+      skill_id: frontendData.skillId || null,
+      is_achievement: frontendData.isAchievement ?? false,
+    }
   }
 }
 

@@ -24,3 +24,9 @@ export interface ICompetencyCreateRequest {
   // khong bat buoc gui
   description?: string
 }
+
+export interface ICompetencyUpdateRequest {
+  id: string
+  title: string
+  description?: string | null
+}

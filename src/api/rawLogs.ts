@@ -26,4 +26,14 @@ export class RawLogsApi {
     })
     return { data: rawLogAdapter.toFrontend(response.data.data) }
   }
+
+  static async update(id: string, payload: IRawLogCreateRequest): Promise<{ data: IRawLogModel }> {
+    const dbPayload = rawLogAdapter.updateRequestToDatabase(payload)
+    const response = await backendApi.put<{ data: IRawLogDatabaseModel }>(`/logs/${id}`, dbPayload)
+    return { data: rawLogAdapter.toFrontend(response.data.data) }
+  }
+
+  static async remove(id: string): Promise<void> {
+    await backendApi.delete(`/logs/${id}`)
+  }
 }
