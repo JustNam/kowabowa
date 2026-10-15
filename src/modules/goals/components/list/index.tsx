@@ -112,6 +112,8 @@ export function GoalsList() {
             ))}
           </Tabs>
         </div>
+        {loading && <p className="text-sm text-gray-500">Loading goals...</p>}
+
         {isEmpty && (
           <p className="text-sm text-gray-500">
             No goals yet. Create your first one.
@@ -184,14 +186,13 @@ export function GoalsList() {
           onSaved={() => setReloadKey((k) => k + 1)}
         />
 
-        {logGoalId && (
-          <RawLogsCreate
-            open
-            defaultGoalId={logGoalId}
-            onClose={() => setLogGoalId(null)}
-            onCreated={() => setReloadKey((k) => k + 1)}
-          />
-        )}
+        {/* Always mounted: closing the form must not unmount the achievement dialog. */}
+        <RawLogsCreate
+          open={logGoalId !== null}
+          defaultGoalId={logGoalId ?? undefined}
+          onClose={() => setLogGoalId(null)}
+          onCreated={() => setReloadKey((k) => k + 1)}
+        />
       </div>
     </PageLayout>
   );

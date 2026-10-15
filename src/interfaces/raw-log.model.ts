@@ -48,3 +48,13 @@ export interface IRawLogCreateDatabaseRequest {
   skill_id?: string
   is_achievement?: boolean
 }
+
+
+export interface IRawLogUpdateDatabaseRequest {
+  title: string
+  goal_id: string
+  logged_at: string
+  description: string | null
+  skill_id: string | null
+  is_achievement: boolean
+}
