@@ -7,6 +7,7 @@ import { DatePicker } from '@/atoms/date-picker'
 import { Button } from '@/atoms/button'
 import { format, isValid } from 'date-fns'
 import { ProfilesApi } from '@/api/profiles'
+import { validateProfileForm } from '@/modules/profile/schema'
 
 interface ProfileEditProps {
   open: boolean
@@ -36,19 +37,26 @@ export function ProfileEdit({ open, onClose, profile, onSaved }: ProfileEditProp
       lastName: lastName.trim(),
       dateOfBirth: toDateString(dateOfBirth),
     }
-    const fnError = values.firstName ? '' : 'First name is required' // có chữ thì lỗi là chuỗi rỗng, còn rỗng thì lỗi là câu thông báo
-    setFirstNameError(fnError)
-    const lnError = values.lastName ? '' : 'Last name is required'
-    setLastNameError(lnError)
-    let dobError = ''
-    if (!values.dateOfBirth) {
-      dobError = 'Date of birth is required'
-    } else if (dateOfBirth! > new Date()) {
-      dobError = 'Date of birth cannot be in the future'
-    }
+    // const fnError = values.firstName ? '' : 'First name is required' // có chữ thì lỗi là chuỗi rỗng, còn rỗng thì lỗi là câu thông báo
+    // setFirstNameError(fnError)
+    // const lnError = values.lastName ? '' : 'Last name is required'
+    // setLastNameError(lnError)
+    // let dobError = ''
+    // if (!values.dateOfBirth) {
+    //   dobError = 'Date of birth is required'
+    // } else if (dateOfBirth! > new Date()) {
+    //   dobError = 'Date of birth cannot be in the future'
+    // }
 
-    setDateOfBirthError(dobError)
-    if (fnError || lnError || dobError) return
+    // setDateOfBirthError(dobError)
+    // if (fnError || lnError || dobError) return
+
+    const errors = validateProfileForm(values)
+    setFirstNameError(errors.firstName ?? '')
+    setLastNameError(errors.lastName ?? '')
+    setDateOfBirthError(errors.dateOfBirth ?? '')
+    if (Object.keys(errors).length > 0) return
+
     setSubmitting(true)
     try {
       const { data } = await ProfilesApi.updateProfile(values)
