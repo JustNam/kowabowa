@@ -42,26 +42,12 @@ interface RawLogsFormProps {
   onClose: () => void
   onCreated: () => void
   onAchievement?: (info: { log: IRawLogModel; goal: IGoalModel }) => void
+  onLogAdded?: (log: IRawLogModel) => void
   defaultGoalId?: string
   skillModalOpen: boolean
   onSkillModalChange: (open: boolean) => void
   editingLog?: IRawLogModel
 }
-
-// TODO: build the Log work form, rendered inside the Modal below.
-// - Fields: goal picker (select among the user's goals), description
-//   (what did you do?), and a competency/skill picker (one
-//   skill demonstrated). Validate with `validateRawLogForm` from
-//   '../../schema'.
-// - On submit, call `RawLogsApi.create(values)` from '@/api/rawLogs',
-//   then `onCreated()` and `onClose()`.
-// - Reuse the Select/Textarea/Button atoms.
-// - Create a skill without leaving this modal: the skill dropdown ends with
-//   an "Add new skill" action. Clicking it opens `CompetenciesCreate` (from
-//   '@/modules/competencies/components/create') on top of this modal. In its
-//   `onCreated`, refetch the skill list via `CompetenciesApi.list()` and
-//   auto-select the new skill in this form, so the user keeps their place
-//   (the other fields they already filled in must not be reset).
 
 const ADD_NEW_SKILL = '__add_new_skill__'
 
@@ -69,6 +55,7 @@ export function RawLogsForm({
   onClose,
   onCreated,
   onAchievement,
+  onLogAdded,
   defaultGoalId,
   skillModalOpen,
   onSkillModalChange,
@@ -119,6 +106,9 @@ export function RawLogsForm({
         const { data: freshGoals } = await GoalsApi.list() // Check if goal is deleted?
         const goal = freshGoals.find((g) => g.id === log.goalId)
         if (goal) onAchievement?.({ log, goal })
+        else onLogAdded?.(log)
+      } else {
+        onLogAdded?.(log)
       }
     } catch (err) {
       setSubmitError(err instanceof Error ? err.message : 'Could not save the log')
@@ -154,11 +144,15 @@ export function RawLogsForm({
         error={Boolean(errors.goalId)}
         helperText={errors.goalId}
         disabled={Boolean(defaultGoalId) || Boolean(editingLog)}
+        sx={{
+          '& .Mui-disabled, & .MuiSelect-select.Mui-disabled': { cursor: 'not-allowed' },
+        }}
         slotProps={{
           select: {
             // The goals list loads after the modal opens; show "Loading..." instead of a blank field.
             renderValue: (selected) =>
-              goals.find((g) => g.id === selected)?.title ?? (goals.length === 0 ? 'Loading...' : ''),
+              goals.find((g) => g.id === selected)?.title ??
+              (goals.length === 0 ? 'Loading...' : ''),
           },
         }}
       >
@@ -184,6 +178,7 @@ export function RawLogsForm({
           textField: {
             size: 'small',
             fullWidth: true,
+            required: true,
             error: Boolean(errors.loggedAt),
             helperText: errors.loggedAt,
           },
@@ -247,6 +242,7 @@ export function RawLogsForm({
             bgcolor: 'background.paper',
             borderTop: '1px solid',
             borderColor: 'divider',
+            '&:hover, &.Mui-focusVisible': { bgcolor: '#F5F5F5' },
           }}
         >
           <span aria-hidden>+</span> Add new skill
@@ -315,6 +311,9 @@ export function RawLogsCreate({
   const [achievement, setAchievement] = useState<IachievementInfo | null>(null)
   const [skillModalOpen, setSkillModalOpen] = useState(false)
 
+  const goToLog = (log: IRawLogModel, tab: 'logs' | 'achievements') =>
+    router.push(`${ROUTES.GOALS.DETAIL(log.goalId)}?tab=${tab}&logId=${log.id}`)
+
   return (
     <>
       <Modal
@@ -327,6 +326,7 @@ export function RawLogsCreate({
           onClose={onClose}
           onCreated={onCreated}
           onAchievement={setAchievement}
+          onLogAdded={(log) => goToLog(log, 'logs')}
           defaultGoalId={defaultGoalId}
           editingLog={log}
           skillModalOpen={skillModalOpen}
@@ -337,9 +337,12 @@ export function RawLogsCreate({
       {achievement && (
         <AchievementModal
           open
-          onClose={() => setAchievement(null)}
+          onClose={() => {
+            goToLog(achievement.log, 'logs')
+            setAchievement(null)
+          }}
           onView={() => {
-            router.push(ROUTES.GOALS.DETAIL(achievement.goal.id))
+            goToLog(achievement.log, 'achievements')
             setAchievement(null)
           }}
           goalTitle={achievement.goal.title}

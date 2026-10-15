@@ -31,6 +31,7 @@ export function ProfileDetail() {
         setFirstName(data.firstName ?? '')
         setLastName(data.lastName ?? '')
         setEmail(data.email)
+        setSkillsUsed(data.skillsCount)
         setDateOfBirth(data.dateOfBirth ? parseISO(data.dateOfBirth) : null)
         const { data: goals } = await GoalsApi.list()
         setGoalsCount(goals.length)
@@ -65,7 +66,46 @@ export function ProfileDetail() {
   const dobText = dateOfBirth ? format(dateOfBirth, 'dd/MM/yyyy') : 'Not set'
 
   // --- JSX ---
-  if (loading) return <p>Loading...</p>
+  // Skeleton cùng bố cục với trang thật để layout không giật khi data về
+  if (loading) return (
+    <div className="flex flex-col gap-8">
+      {/* Avatar + Tên + Email + Button edit */}
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-4">
+          <div className="h-16 w-16 rounded-full bg-slate-200" />
+          <div className="flex flex-col gap-2">
+            <div className="h-5 w-40 rounded bg-slate-200" />
+            <div className="h-4 w-56 rounded bg-slate-200" />
+          </div>
+        </div>
+        <div className="h-9 w-16 rounded bg-slate-200" />
+      </div>
+
+      {/* Basic info */}
+      <section>
+        <div className="h-5 w-24 rounded bg-slate-200" />
+        <div className="mt-3 grid grid-cols-[160px_1fr] gap-y-3">
+          {[0, 1, 2, 3].map((i) => (
+            <div key={i} className="contents">
+              <div className="h-4 w-24 rounded bg-slate-200" />
+              <div className="h-4 w-40 rounded bg-slate-200" />
+            </div>
+          ))}
+        </div>
+      </section>
+
+      {/* Statistics */}
+      <section>
+        <div className="h-5 w-24 rounded bg-slate-200" />
+        <div className="mt-3 grid grid-cols-3 gap-4">
+          {[0, 1, 2].map((i) => (
+            <div key={i} className="h-20 rounded-lg bg-slate-200" />
+          ))}
+        </div>
+      </section>
+    </div>
+  )
+
   return (
     <div className="flex flex-col gap-8">
       {/* Avatar + Tên + Email + Button edit */}
@@ -110,7 +150,7 @@ export function ProfileDetail() {
             <p className="text-sm text-slate-900">Logs</p>
           </div>
           <div className="rounded-lg border border-slate-200 p-4">
-            <p className="text-2xl font-semibold text-slate-900">0</p>
+            <p className="text-2xl font-semibold text-slate-900">{skillsUsed}</p>
             <p className="text-sm text-slate-900">Skills used</p>
           </div>
         </div>

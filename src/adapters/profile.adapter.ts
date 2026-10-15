@@ -15,6 +15,7 @@ implements IDataAdapter<IProfileDatabaseModel, IProfileModel>
             firstName: dbData.first_name,
             lastName: dbData.last_name,
             dateOfBirth: dbData.date_of_birth,
+            skillsCount: dbData.skills_count ?? 0,
     }}
 
     toDatabase(frontendData: IProfileModel): IProfileDatabaseModel {
@@ -28,7 +29,7 @@ implements IDataAdapter<IProfileDatabaseModel, IProfileModel>
             first_name: frontendData.firstName,
             last_name: frontendData.lastName,
             date_of_birth: frontendData.dateOfBirth,
-
+            skills_count: frontendData.skillsCount
         }
     }
 }
