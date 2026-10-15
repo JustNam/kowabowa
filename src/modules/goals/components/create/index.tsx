@@ -14,7 +14,7 @@ import { validateGoalForm } from "../../schema";
 interface GoalsCreateProps {
   open: boolean;
   onClose: () => void;
-  onSaved: () => void;
+  onSaved: (saved: IGoalModel) => void;
   goal?: IGoalModel; // nếu có goal thì bật chế độ Edit
 }
 
@@ -85,10 +85,12 @@ export function GoalsCreate({
     setServerError(null);
     try {
       const payload = { ...values, title: values.title.trim() };
-      if (goal) await GoalsApi.update(goal.id, payload);
-      else await GoalsApi.create(payload);
+
+      const { data: saved } = goal
+        ? await GoalsApi.update(goal.id, payload)
+        : await GoalsApi.create(payload);
       reset();
-      onSaved();
+      onSaved(saved);
       onClose();
     } catch (err) {
       setServerError((err as Error).message); // loi mang, 401, 400 from BE

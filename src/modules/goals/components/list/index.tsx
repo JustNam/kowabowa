@@ -15,6 +15,7 @@ import { PageLayout } from "@/components/PageLayout";
 import AddIcon from "@mui/icons-material/Add";
 import { RawLogsCreate } from "@/modules/raw-logs/components/create";
 import { GoalActions } from "../actions";
+import { useRouter } from "next/navigation";
 
 const plural = (n: number, word: string) => `${n} ${word}${n === 1 ? "" : "s"}`;
 type StatusTab = "all" | EGoalStatus;
@@ -28,7 +29,6 @@ const TABS: StatusTab[] = [
 
 export function GoalsList() {
   const [createOpen, setCreateOpen] = useState(false);
-
   const [goals, setGoals] = useState<IGoalModel[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -36,6 +36,8 @@ export function GoalsList() {
   const [search, setSearch] = useState("");
   const [tab, setTab] = useState<StatusTab>("all");
   const [logGoalId, setLogGoalId] = useState<string | null>(null);
+
+  const router = useRouter();
 
   useEffect(() => {
     let cancelled = false;
@@ -181,7 +183,7 @@ export function GoalsList() {
         <GoalsCreate
           open={createOpen}
           onClose={() => setCreateOpen(false)}
-          onSaved={() => setReloadKey((k) => k + 1)}
+          onSaved={(saved) => router.push(ROUTES.GOALS.DETAIL(saved.id))}
         />
 
         {logGoalId && (
