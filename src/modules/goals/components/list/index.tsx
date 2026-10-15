@@ -16,6 +16,7 @@ import AddIcon from "@mui/icons-material/Add";
 import { RawLogsCreate } from "@/modules/raw-logs/components/create";
 import { GoalActions } from "../actions";
 import { useRouter } from "next/navigation";
+import TrackChangesIcon from "@mui/icons-material/TrackChanges";
 
 const plural = (n: number, word: string) => `${n} ${word}${n === 1 ? "" : "s"}`;
 type StatusTab = "all" | EGoalStatus;
@@ -116,7 +117,7 @@ export function GoalsList() {
           </div>
         )}
 
-        {ready && (
+        {ready && goals.length > 0 && (
           <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
             <div className="w-full md:w-72">
               <Input
@@ -142,9 +143,17 @@ export function GoalsList() {
         )}
 
         {isEmpty && (
-          <p className="text-sm text-gray-500">
-            No goals yet. Create your first one.
-          </p>
+          <div className="flex flex-col items-center gap-3 rounded border border-dashed border-gray-300 px-6 py-12 text-center">
+            <TrackChangesIcon sx={{ fontSize: 40, color: "text.disabled" }} />
+            <h2 className="text-base font-semibold">No goals yet</h2>
+            <p className="max-w-sm text-sm text-gray-500">
+              Set a goal for what you are working toward, then log your progress
+              as you go.
+            </p>
+            <Button startIcon={<AddIcon />} onClick={() => setCreateOpen(true)}>
+              Create your first goal
+            </Button>
+          </div>
         )}
 
         {noMatch && (
