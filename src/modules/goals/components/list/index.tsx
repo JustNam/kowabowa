@@ -81,6 +81,12 @@ export function GoalsList() {
     setTab("all");
   };
 
+  const retry = () => {
+    setLoading(true);
+    setError(null);
+    setReloadKey((k) => k + 1);
+  };
+
   return (
     <PageLayout
       title="Goals"
@@ -92,28 +98,49 @@ export function GoalsList() {
       }
     >
       <div className="flex flex-col gap-4">
-        <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-          <div className="w-full md:w-72">
-            <Input
-              placeholder="Search goals"
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-            />
-          </div>
-          <Tabs
-            value={tab}
-            onChange={(_, value) => setTab(value)}
-            variant="scrollable"
+        {loading && (
+          <p role="status" className="py-10 text-center text-sm text-gray-500">
+            Loading to your success...
+          </p>
+        )}
+
+        {error && (
+          <div
+            role="alert"
+            className="flex flex-col items-center gap-3 rounded border border-gray-200 py-10 text-center"
           >
-            {TABS.map((t) => (
-              <Tab
-                key={t}
-                value={t}
-                label={`${t === "all" ? "All" : GOAL_STATUS_LABEL[t]} (${countFor(t)})`}
+            <p className="text-sm text-gray-700">{error}</p>
+            <Button variant="secondary" onClick={retry}>
+              Try agian
+            </Button>
+          </div>
+        )}
+
+        {ready && (
+          <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+            <div className="w-full md:w-72">
+              <Input
+                placeholder="Search goals"
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
               />
-            ))}
-          </Tabs>
-        </div>
+            </div>
+            <Tabs
+              value={tab}
+              onChange={(_, value) => setTab(value)}
+              variant="scrollable"
+            >
+              {TABS.map((t) => (
+                <Tab
+                  key={t}
+                  value={t}
+                  label={`${t === "all" ? "All" : GOAL_STATUS_LABEL[t]} (${countFor(t)})`}
+                />
+              ))}
+            </Tabs>
+          </div>
+        )}
+
         {isEmpty && (
           <p className="text-sm text-gray-500">
             No goals yet. Create your first one.
