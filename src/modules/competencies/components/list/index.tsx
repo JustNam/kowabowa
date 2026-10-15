@@ -25,6 +25,7 @@ import TableRow from '@mui/material/TableRow'
 import TableCell from '@mui/material/TableCell'         
 import TableContainer from '@mui/material/TableContainer'
 import Pagination from '@mui/material/Pagination'
+import AddIcon from "@mui/icons-material/Add";
 
 function formatDate(value: string): string {
   return new Date(value).toLocaleDateString('en-GB', {
@@ -224,7 +225,10 @@ export function CompetenciesList() {
   return (
     <PageLayout
       title="Skills"
-      actions={<Button onClick={() => setCreateOpen(true)}>Add skill</Button>}
+      subtitle="Competencies you're tracking and growing."
+      actions={<Button startIcon={<AddIcon />} onClick={() => setCreateOpen(true)}>
+        Add skill
+      </Button>}
     >
       <div className="flex flex-col gap-4">
 
